@@ -31,5 +31,10 @@ if kubectl auth can-i create pods --as=$SERVICE_ACCOUNT_USER &> /dev/null; then
   exit 1
 fi
 
+if kubectl auth can-i list pods --as=$SERVICE_ACCOUNT_USER -A &> /dev/null; then
+  echo "ServiceAccount has excessive permissions (can 'list' pods in other namespace)."
+  exit 1
+fi
+
 echo "Verification successful: RBAC role and binding correctly configured."
 exit 0
