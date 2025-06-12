@@ -26,5 +26,10 @@ if kubectl auth can-i create pods --as=$SERVICE_ACCOUNT_USER -n $NAMESPACE &> /d
   exit 1
 fi
 
+if kubectl auth can-i create pods --as=$SERVICE_ACCOUNT_USER &> /dev/null; then
+  echo "ServiceAccount has excessive permissions (can 'create' pods in other namespace)."
+  exit 1
+fi
+
 echo "Verification successful: RBAC role and binding correctly configured."
 exit 0
