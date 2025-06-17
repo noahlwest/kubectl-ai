@@ -106,4 +106,4 @@ The `analyze` subcommand will gather the results from previous runs and display 
 
 ### Contributions
 
-We're open to contributions in k8s-bench, check out the [contributions guide.](contributions.md)
+We're open to contributions in k8s-bench, check out the [contributions guide.](contributing.md)
