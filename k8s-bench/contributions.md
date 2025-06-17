@@ -39,7 +39,7 @@ Do not include hints in the prompt solely to make the eval easier to pass. It is
 Avoid using names that reveal the context of an eval. For instance, use webapp-frontend as a namespace instead of debug-frontend-evaluation. Hints that the model is operating within a test environment could affect its abilities.
 
 #### Use Best Practices
-Setup and verification scripts should employ best practices. For example, use `kubectl --wait` to check for the state of a resource during setup or verification, rather than relying on sleep commands.
+Setup and verification scripts should employ best practices. For example, use `kubectl --wait` to check for the state of a resource during setup or verification, rather than relying on sleep commands. YAMLs or scripts needed for setup should be included in the `Artifacts` directory, and not inlined in the `setup.sh` script.
 
 #### Verifying Text Output
 If the eval only requires verifying a model's text output, you can omit the verify.sh script. Instead, use the expect field within the task.yaml file to specify the expected output.
