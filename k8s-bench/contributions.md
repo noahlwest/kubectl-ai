@@ -35,14 +35,14 @@ Prompts should mirror real-world user scenarios. For example:
 #### Avoid Unnecessary Hints
 Do not include hints in the prompt solely to make the eval easier to pass. It is acceptable for a model to fail an eval. These failures provide valuable data for measuring the improvement of future models.
 
-#### Verifying Text Output
-If the eval only requires verifying a model's text output, you can omit the verify.sh script. Instead, use the expect field within the task.yaml file to specify the expected output.
-
 #### Maintain Realism in Naming
 Avoid using names that reveal the context of an eval. For instance, use webapp-frontend as a namespace instead of debug-frontend-evaluation. Hints that the model is operating within a test environment could affect its abilities.
 
 #### Use Best Practices
 Setup and verification scripts should employ best practices. For example, use `kubectl --wait` to check for the state of a resource during setup or verification, rather than relying on sleep commands.
+
+#### Verifying Text Output
+If the eval only requires verifying a model's text output, you can omit the verify.sh script. Instead, use the expect field within the task.yaml file to specify the expected output.
 
 #### Documenting Evaluation Runs
 It is highly recommended to include a screenshot or a copy of the output from both a successful and, if possible, a failed run of the eval.
