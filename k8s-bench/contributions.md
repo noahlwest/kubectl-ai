@@ -22,7 +22,7 @@ Each eval must be contained within its own directory, with the directory name se
 * **setup.sh**: This script prepares the eval environment using kubectl commands or other necessary tools.
 * **cleanup.sh**: This script removes any resources created during the eval. Typically, this involves deleting the namespace, which in turn removes all resources within it.
 * **verify.sh**: This script confirms that the model has successfully completed the task as intended.
-* **Artifacts/**: An optional directory containing any additional files, scripts, or resources required for the eval.
+* **artifacts/**: An optional directory containing any additional files, scripts, or resources required for the eval.
 
 ## Guidelines for Creating Evaluations
 Please adhere to the following guidelines to ensure consistency and effectiveness:
@@ -53,4 +53,4 @@ For a quick build/run and analyze loop from the main directory:
 TEST_ARGS="--task-pattern eval-name" make run-evals
 make analyze-evals
 ```
-See k8s-bench/README.md for information about running evals analyzing the results.
+See [README.md](README.md) for information about running evals analyzing the results.
