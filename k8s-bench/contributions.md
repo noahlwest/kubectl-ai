@@ -18,11 +18,11 @@ Evals should be designed to be sufficiently challenging, so they push the bounda
 ### Evaluation Format
 Each eval must be contained within its own directory, with the directory name serving as the name of the eval. The contents of this directory should be as follows:
 
-* task.yaml: This file defines the eval test that the model will execute.
-* setup.sh: This script prepares the eval environment using kubectl commands or other necessary tools.
-* cleanup.sh: This script removes any resources created during the eval. Typically, this involves deleting the namespace, which in turn removes all resources within it.
-* verify.sh: This script confirms that the model has successfully completed the task as intended.
-* Artifacts/: An optional directory containing any additional files, scripts, or resources required for the eval.
+* **task.yaml**: This file defines the eval test that the model will execute.
+* **setup.sh**: This script prepares the eval environment using kubectl commands or other necessary tools.
+* **cleanup.sh**: This script removes any resources created during the eval. Typically, this involves deleting the namespace, which in turn removes all resources within it.
+* **verify.sh**: This script confirms that the model has successfully completed the task as intended.
+* **Artifacts/**: An optional directory containing any additional files, scripts, or resources required for the eval.
 
 ## Guidelines for Creating Evaluations
 Please adhere to the following guidelines to ensure consistency and effectiveness:
