@@ -31,6 +31,7 @@ import (
 	"github.com/GoogleCloudPlatform/kubectl-ai/pkg/api"
 	"github.com/GoogleCloudPlatform/kubectl-ai/pkg/journal"
 	"github.com/GoogleCloudPlatform/kubectl-ai/pkg/mcp"
+	"github.com/GoogleCloudPlatform/kubectl-ai/pkg/sessions"
 	"github.com/GoogleCloudPlatform/kubectl-ai/pkg/tools"
 	"github.com/google/uuid"
 	"k8s.io/klog/v2"
@@ -94,6 +95,9 @@ type Agent struct {
 
 	// Recorder captures events for diagnostics
 	Recorder journal.Recorder
+
+	// ChatMessageStore is the underlying session persistence layer.
+	ChatMessageStore sessions.ChatMessageStore
 
 	llmChat gollm.Chat
 
@@ -182,12 +186,22 @@ func (s *Agent) Init(ctx context.Context) error {
 
 	// TODO: this is ephemeral for now, but in the future, we will support
 	// session persistence.
-	s.session = &api.Session{
-		ID:           uuid.New().String(),
-		Messages:     []*api.Message{},
-		AgentState:   api.AgentStateIdle,
-		CreatedAt:    time.Now(),
-		LastModified: time.Now(),
+	sessionFromStore, ok := s.ChatMessageStore.(*sessions.Session)
+	if ok {
+		sessionMetadata, err := sessionFromStore.LoadMetadata()
+		if err != nil {
+			return fmt.Errorf("Failed to load metadata for ChatMessageStore")
+		}
+		s.session = &api.Session{
+			ID: sessionFromStore.ID,
+			Messages: []*api.Message{},
+			AgentState: api.AgentStateIdle,
+			CreatedAt: sessionMetadata.CreatedAt,
+			LastModified: sessionMetadata.LastAccessed,
+			SessionDB: s.ChatMessageStore.(*sessions.Session),
+		}
+	} else {
+		return fmt.Errorf("Failed to load session while Initializing")
 	}
 
 	// Create a temporary working directory
@@ -208,8 +222,20 @@ func (s *Agent) Init(ctx context.Context) error {
 	}
 
 	// Start a new chat session
+	chat := s.LLM.StartChat(systemPrompt, s.Model)
+
+	if s.ChatMessageStore != nil {
+		messages := s.ChatMessageStore.ChatMessages()
+		if len(messages) > 0 {
+			if err := chat.Initialize(messages); err != nil {
+				return fmt.Errorf("loading history into chat: %w", err)
+			}
+		}
+		chat = NewChatLogger(chat, s.ChatMessageStore)
+	}
+
 	s.llmChat = gollm.NewRetryChat(
-		s.LLM.StartChat(systemPrompt, s.Model),
+		chat,
 		gollm.RetryConfig{
 			MaxAttempts:    3,
 			InitialBackoff: 10 * time.Second,
@@ -451,6 +477,7 @@ func (c *Agent) Run(ctx context.Context, initialQuery string) error {
 				var llmError error
 
 				for response, err := range stream {
+					log.Info("westnoah Trying to read response")
 					if err != nil {
 						log.Error(err, "error reading streaming LLM response")
 						llmError = err
@@ -459,6 +486,7 @@ func (c *Agent) Run(ctx context.Context, initialQuery string) error {
 						break
 					}
 					if response == nil {
+						log.Info("westnoah Response was nil")
 						// end of streaming response
 						break
 					}
@@ -475,6 +503,7 @@ func (c *Agent) Run(ctx context.Context, initialQuery string) error {
 					candidate := response.Candidates()[0]
 
 					for _, part := range candidate.Parts() {
+						log.Info("westnoah In the parts loop")
 						// Check if it's a text response
 						if text, ok := part.AsText(); ok {
 							log.Info("text response", "text", text)
@@ -620,11 +649,28 @@ func (c *Agent) Run(ctx context.Context, initialQuery string) error {
 
 func (c *Agent) handleMetaQuery(ctx context.Context, query string) (answer string, handled bool, err error) {
 	switch query {
-	case "clear", "reset":
+	case "clear":
 		c.sessionMu.Lock()
 		c.session.Messages = []*api.Message{}
 		c.sessionMu.Unlock()
 		return "Cleared the conversation.", true, nil
+	case "reset":
+		// TODO(westnoah): dedup
+		c.sessionMu.Lock()
+		c.session.Messages = []*api.Message{}
+		c.sessionMu.Unlock()
+		if c.session.SessionDB != nil {
+			if err := c.session.SessionDB.ClearChatMessages(); err != nil {
+				return "", false, fmt.Errorf("clearing data store: %w", err)
+			}
+		}
+		err := c.Init(ctx)
+		if err != nil {
+			return "", false, err
+		}
+		return "Reset the conversation.", true, nil
+	case "compact":
+		return "Compaction not yet implemented.", true, nil
 	case "model":
 		return "Current model is `" + c.Model + "`", true, nil
 	case "models":
@@ -635,7 +681,41 @@ func (c *Agent) handleMetaQuery(ctx context.Context, query string) (answer strin
 		return "Available models:\n\n  - " + strings.Join(models, "\n  - ") + "\n\n", true, nil
 	case "tools":
 		return "Available tools:\n\n  - " + strings.Join(c.Tools.Names(), "\n  - ") + "\n\n", true, nil
+	case "session":
+		if c.session.SessionDB == nil {
+			return "No active session.", true, nil
+		}
+		metadata, err := c.session.SessionDB.LoadMetadata()
+		if err != nil {
+			return "", false, fmt.Errorf("failed to load session metadata: %w", err)
+		}
+		sessionString := fmt.Sprintf("SessionID: %s\n", c.session.SessionDB.ID) + metadata.String()
+		return sessionString, true, nil
+	case "sessions":
+		manager, err := sessions.NewSessionManager()
+		if err != nil {
+			return "", false, fmt.Errorf("failed to create session manager: %w", err)
+		}
+		sessionList, err := manager.ListSessions()
+		if err != nil {
+			return "", false, fmt.Errorf("failed to list sessions: %w", err)
+		}
+		if len(sessionList) == 0 {
+			return "No sessions found.", true, nil
+		}
+		sessionListString := "Available sessions:\n"
+		for _, session := range sessionList {
+			metadata, err := session.LoadMetadata()
+			if err != nil {
+				sessionListString += fmt.Sprintf("%s: <error loading metadata\n", session.ID)
+				continue
+			}
+			sessionString := fmt.Sprintf("\nSessionID: %s\n", session.ID) + metadata.String()
+			sessionListString += sessionString
+		}
+		return sessionListString, true, nil
 	}
+
 
 	return "", false, nil
 }
