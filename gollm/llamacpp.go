@@ -293,6 +293,11 @@ func (c *LlamaCppChat) IsRetryableError(err error) bool {
 	return false
 }
 
+// Initialize implements Chat.
+func (c *LlamaCppChat) Initialize(messages []*ChatMessage) error {
+	return fmt.Errorf("LoadHistory not yet implemented for llamacpp")
+}
+
 func ptrTo[T any](t T) *T {
 	return &t
 }

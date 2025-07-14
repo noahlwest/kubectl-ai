@@ -14,7 +14,11 @@
 
 package api
 
-import "time"
+import (
+	"time"
+
+	"github.com/GoogleCloudPlatform/kubectl-ai/pkg/sessions"
+)
 
 type Session struct {
 	ID           string
@@ -24,6 +28,8 @@ type Session struct {
 	LastModified time.Time
 	// MCP status information
 	MCPStatus *MCPStatus
+	// sessionDB is the underlying data persistence layer for the session.
+	SessionDB *sessions.Session
 }
 
 type AgentState string

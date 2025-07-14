@@ -268,6 +268,11 @@ func (c *AzureOpenAIChat) IsRetryableError(err error) bool {
 	return false
 }
 
+// Initialize implements Chat.
+func (c *AzureOpenAIChat) Initialize(messages []*ChatMessage) error {
+	return fmt.Errorf("LoadHistory not yet implemented for azopenai")
+}
+
 func (c *AzureOpenAIChat) SendStreaming(ctx context.Context, contents ...any) (ChatResponseIterator, error) {
 	// TODO: Implement streaming
 	response, err := c.Send(ctx, contents...)
