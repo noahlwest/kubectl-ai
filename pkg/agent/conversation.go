@@ -24,6 +24,7 @@ import (
 	"os"
 	"sort"
 	"strings"
+	"strconv"
 	"sync"
 	"time"
 
@@ -170,6 +171,93 @@ func (c *Agent) agentState() api.AgentState {
 	return c.session.AgentState
 }
 
+func convertLLMMessageArrayToApiMessageArray(llmMsgs []*gollm.ChatMessage) []*api.Message {
+	var apiMsgs []*api.Message
+	for _, msg := range llmMsgs {
+		if apiMsg, ok := convertLLMMessageToApiMessage(*msg); ok {
+			apiMsgs = append(apiMsgs, &apiMsg)
+		}
+	}
+	return apiMsgs
+}
+
+func convertLLMMessageToApiMessage(llmMsg gollm.ChatMessage) (api.Message, bool) {
+	var source api.MessageSource
+	switch llmMsg.Role {
+		case "user":
+			source = api.MessageSourceUser
+		case "model":
+			source = api.MessageSourceModel
+		case "agent", "assistant":
+			source = api.MessageSourceAgent
+		default:
+			source = api.MessageSourceUser
+	}
+	var payload any
+	var msgType api.MessageType
+	if len(llmMsg.Content) == 1 {
+		// Case: Content is a single string, add text to the message
+		if str, ok := llmMsg.Content[0].(string); ok {
+            payload = str
+			msgType = api.MessageTypeText
+        } else {
+			// Case: Content is a command/stdout map, add stdout to the message as tool call response
+			if val, ok := deepGet(llmMsg.Content, "0", "result", "stdout"); ok {
+				payload = val
+				msgType = api.MessageTypeToolCallResponse
+			}
+		}
+	} else if len(llmMsg.Content) == 0 {
+		// Case: Response has a function call, add command to the message as tool call request
+		if val, ok := deepGet(llmMsg.Response, "raw", "candidates", "0", "content", "parts", "0", "functionCall", "args", "command"); ok {
+			payload = val
+			msgType = api.MessageTypeToolCallRequest
+		}
+		if val, ok := deepGet(llmMsg.Response, "raw", "candidates", "0", "content", "parts", "0", "text"); ok {
+			payload = val
+			msgType = api.MessageTypeText
+		}
+	}
+	if payload == nil {
+		klog.Info("Unable to convert llm message to api message")
+		return api.Message{}, false
+	}
+	message := api.Message{
+		ID:        uuid.New().String(),
+		Source:    source,
+		Type:      msgType,
+		Payload:   payload,
+		Timestamp: time.Now(),
+	}
+	return message, true
+}
+
+// Helper function to get field from deeply nested maps/arrays we may use
+// Expects path to be a combination of map keys and/or array indices
+func deepGet(v any, path ...string) (any, bool) {
+    current := v
+    for _, key := range path {
+        switch node := current.(type) {
+        case map[string]any:
+            val, exists := node[key]
+            if !exists {
+                return nil, false
+            }
+            current = val
+        case []any:
+            // Try to parse the key as an integer index
+            index, err := strconv.Atoi(key)
+            if err != nil || index < 0 || index >= len(node) {
+                return nil, false
+            }
+            current = node[index]
+        default:
+            return nil, false
+        }
+    }
+    return current, true
+}
+
 func (s *Agent) Init(ctx context.Context) error {
 	log := klog.FromContext(ctx)
 
@@ -184,17 +272,16 @@ func (s *Agent) Init(ctx context.Context) error {
 		return fmt.Errorf("RunOnce mode requires an initial query to be provided")
 	}
 
-	// TODO: this is ephemeral for now, but in the future, we will support
-	// session persistence.
 	sessionFromStore, ok := s.ChatMessageStore.(*sessions.Session)
 	if ok {
 		sessionMetadata, err := sessionFromStore.LoadMetadata()
 		if err != nil {
 			return fmt.Errorf("Failed to load metadata for ChatMessageStore")
 		}
+		messages := convertLLMMessageArrayToApiMessageArray(s.ChatMessageStore.ChatMessages())
 		s.session = &api.Session{
 			ID: sessionFromStore.ID,
-			Messages: []*api.Message{},
+			Messages: messages,
 			AgentState: api.AgentStateIdle,
 			CreatedAt: sessionMetadata.CreatedAt,
 			LastModified: sessionMetadata.LastAccessed,
@@ -477,7 +564,6 @@ func (c *Agent) Run(ctx context.Context, initialQuery string) error {
 				var llmError error
 
 				for response, err := range stream {
-					log.Info("westnoah Trying to read response")
 					if err != nil {
 						log.Error(err, "error reading streaming LLM response")
 						llmError = err
@@ -486,7 +572,6 @@ func (c *Agent) Run(ctx context.Context, initialQuery string) error {
 						break
 					}
 					if response == nil {
-						log.Info("westnoah Response was nil")
 						// end of streaming response
 						break
 					}
@@ -503,7 +588,6 @@ func (c *Agent) Run(ctx context.Context, initialQuery string) error {
 					candidate := response.Candidates()[0]
 
 					for _, part := range candidate.Parts() {
-						log.Info("westnoah In the parts loop")
 						// Check if it's a text response
 						if text, ok := part.AsText(); ok {
 							log.Info("text response", "text", text)
