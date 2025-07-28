@@ -480,7 +480,7 @@ func (c *GeminiChat) Initialize(messages []*api.Message) error {
 	klog.Info("Initializing gemini chat")
 	c.history = make([]*genai.Content, 0, len(messages))
 	for _, msg := range messages {
-		content, err := messageToContent(msg)
+		content, err := c.messageToContent(msg)
 		if err != nil {
 			continue
 		}
@@ -489,7 +489,7 @@ func (c *GeminiChat) Initialize(messages []*api.Message) error {
 	return nil
 }
 
-func messageToContent(msg *api.Message) (*genai.Content, error) {
+func (c *GeminiChat) messageToContent(msg *api.Message) (*genai.Content, error) {
 	var role string
 	switch msg.Source {
 	case api.MessageSourceUser:
@@ -502,56 +502,9 @@ func messageToContent(msg *api.Message) (*genai.Content, error) {
 		return nil, fmt.Errorf("unknown message source: %s", msg.Source)
 	}
 
-	var parts []*genai.Part
-	switch msg.Type {
-	case api.MessageTypeText:
-		if s, ok := msg.Payload.(string); ok {
-			parts = append(parts, &genai.Part{Text: s})
-		}
-
-	case api.MessageTypeToolCallRequest:
-		if str, ok := msg.Payload.(string); ok {
-			// tool call is able to be parsed from a string
-			parts = append(parts, &genai.Part{
-				FunctionCall: &genai.FunctionCall{
-					ID:   msg.ID,
-					Name: str,
-				},
-			})
-		}
-
-	case api.MessageTypeToolCallResponse:
-		// cast Payload as Map, get 'command' and 'stdout' fields
-		var command string
-		var stdout string
-		if payloadMap, ok := msg.Payload.(map[string]any); ok {
-			if cmd, cmdOk := payloadMap["command"].(string); cmdOk {
-				command = cmd
-			} else {
-				return nil, fmt.Errorf("tool call response payload missing 'command' field or not a string")
-			}
-			if out, outOk := payloadMap["stdout"].(string); outOk {
-				stdout = out
-			} else {
-				return nil, fmt.Errorf("tool call response payload missing `stdout` field or not a string")
-			}
-
-			parts = append(parts, &genai.Part{
-				FunctionResponse: &genai.FunctionResponse{
-					ID:       msg.ID,
-					Name:     command,
-					Response: map[string]any{"stdout": stdout},
-				},
-			})
-		}
-
-	default:
-		// Fallback for other message types
-		payloadBytes, err := json.Marshal(msg.Payload)
-		if err != nil {
-			return nil, fmt.Errorf("failed to marshal payload for message type %s: %w", msg.Type, err)
-		}
-		parts = append(parts, &genai.Part{Text: string(payloadBytes)})
+	parts, err := c.partsToGemini(msg.Payload)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert message payload to parts: %w", err)
 	}
 
 	return &genai.Content{Role: role, Parts: parts}, nil
