@@ -306,8 +306,15 @@ func (c *Agent) Run(ctx context.Context, initialQuery string) error {
 				c.pendingFunctionCalls = []ToolCallAnalysis{}
 			}
 		} else {
-			greetingMessage := "Hey there, what can I help you with today ?"
-			c.addMessage(api.MessageSourceAgent, api.MessageTypeUserInputRequest, greetingMessage)
+			if len(c.session.Messages) > 0 {
+				// Resuming existing session
+				greetingMessage := "Welcome back. What can I help you with today?\n (Don't want to continue your last session? Use --new-session)"
+				c.addMessage(api.MessageSourceAgent, api.MessageTypeUserInputRequest, greetingMessage)
+			} else {
+				// Starting new session
+				greetingMessage := "Hey there, what can I help you with today?"
+				c.addMessage(api.MessageSourceAgent, api.MessageTypeUserInputRequest, greetingMessage)
+			}
 		}
 		for {
 			var userInput any
@@ -641,6 +648,7 @@ func (c *Agent) handleMetaQuery(ctx context.Context, query string) (answer strin
 		if err := c.session.ChatMessageStore.ClearChatMessages(); err != nil {
 			return "Failed to clear the conversation", false, err
 		}
+		c.llmChat.Initialize(c.session.ChatMessageStore.ChatMessages())
 		c.sessionMu.Unlock()
 		return "Cleared the conversation.", true, nil
 	case "exit", "quit":
@@ -656,6 +664,17 @@ func (c *Agent) handleMetaQuery(ctx context.Context, query string) (answer strin
 		return "Available models:\n\n  - " + strings.Join(models, "\n  - ") + "\n\n", true, nil
 	case "tools":
 		return "Available tools:\n\n  - " + strings.Join(c.Tools.Names(), "\n  - ") + "\n\n", true, nil
+	case "session":
+		metadata, err := c.session.ChatMessageStore.(*sessions.Session).LoadMetadata()
+		if err != nil {
+			return "", false, fmt.Errorf("failed to load session metadata: %w", err)
+		}
+		return fmt.Sprintf("Current session:\n\nID: %s\nCreated: %s\nLast Accessed: %s\nModel: %s\nProvider: %s\n\n",
+			c.session.ID,
+			metadata.CreatedAt.Format("2006-01-02 15:04:05"),
+			metadata.LastAccessed.Format("2006-01-02 15:04:05"),
+			metadata.ModelID,
+			metadata.ProviderID), true, nil
 	case "sessions":
 		manager, err := sessions.NewSessionManager()
 		if err != nil {
