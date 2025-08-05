@@ -388,51 +388,54 @@ func RunRootCommand(ctx context.Context, opt Options, args []string) error {
 		return fmt.Errorf("failed to create session manager: %w", err)
 	}
 
-	// Handle session creation or loading
-	if opt.NewSession {
-		// Create a new session
-		meta := sessions.Metadata{
-			ProviderID: opt.ProviderID,
-			ModelID:    opt.ModelID,
-		}
-		currentSession, err = sessionManager.NewSession(meta)
-		if err != nil {
-			return fmt.Errorf("failed to create a new session: %w", err)
-		}
-		klog.Infof("Created new session: %s\n", currentSession.ID)
-	} else {
-		// Load existing session
-		var sessionID string
-		if opt.SessionID == "" || opt.SessionID == "latest" {
-			// Get the latest session
-			currentSession, err = sessionManager.GetLatestSession()
+	// TODO: Remove this when session persistence is default
+	if opt.NewSession || opt.SessionID != "" {
+		// Handle session creation or loading
+		if opt.NewSession {
+			// Create a new session
+			meta := sessions.Metadata{
+				ProviderID: opt.ProviderID,
+				ModelID:    opt.ModelID,
+			}
+			currentSession, err = sessionManager.NewSession(meta)
 			if err != nil {
-				return fmt.Errorf("failed to get latest session: %w", err)
+				return fmt.Errorf("failed to create a new session: %w", err)
 			}
-			if currentSession == nil {
-				// No sessions exist, create a new one
-				meta := sessions.Metadata{
-					ProviderID: opt.ProviderID,
-					ModelID:    opt.ModelID,
-				}
-				currentSession, err = sessionManager.NewSession(meta)
-				if err != nil {
-					return fmt.Errorf("failed to create new session: %w", err)
-				}
-				klog.Infof("Created new session: %s\n", currentSession.ID)
-			}
+			klog.Infof("Created new session: %s\n", currentSession.ID)
 		} else {
-			sessionID = opt.SessionID
-			currentSession, err = sessionManager.FindSessionByID(sessionID)
-			if err != nil {
-				return fmt.Errorf("session %s not found: %w", sessionID, err)
+			// Load existing session
+			var sessionID string
+			if opt.SessionID == "" || opt.SessionID == "latest" {
+				// Get the latest session
+				currentSession, err = sessionManager.GetLatestSession()
+				if err != nil {
+					return fmt.Errorf("failed to get latest session: %w", err)
+				}
+				if currentSession == nil {
+					// No sessions exist, create a new one
+					meta := sessions.Metadata{
+						ProviderID: opt.ProviderID,
+						ModelID:    opt.ModelID,
+					}
+					currentSession, err = sessionManager.NewSession(meta)
+					if err != nil {
+						return fmt.Errorf("failed to create new session: %w", err)
+					}
+					klog.Infof("Created new session: %s\n", currentSession.ID)
+				}
+			} else {
+				sessionID = opt.SessionID
+				currentSession, err = sessionManager.FindSessionByID(sessionID)
+				if err != nil {
+					return fmt.Errorf("session %s not found: %w", sessionID, err)
+				}
 			}
-		}
 
-		if currentSession != nil {
-			// Update last accessed time
-			if err := currentSession.UpdateLastAccessed(); err != nil {
-				klog.Warningf("Failed to update session last accessed time: %v", err)
+			if currentSession != nil {
+				// Update last accessed time
+				if err := currentSession.UpdateLastAccessed(); err != nil {
+					klog.Warningf("Failed to update session last accessed time: %v", err)
+				}
 			}
 		}
 	}

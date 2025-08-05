@@ -140,7 +140,9 @@ func (c *Agent) addMessage(source api.MessageSource, messageType api.MessageType
 		Payload:   payload,
 		Timestamp: time.Now(),
 	}
-	c.session.ChatMessageStore.AddChatMessage(message)
+	if cms, ok := c.session.ChatMessageStore.(*sessions.Session); ok && cms != nil {
+		c.session.ChatMessageStore.AddChatMessage(message)
+	}
 	c.session.LastModified = time.Now()
 	c.Output <- message
 	return message
@@ -184,25 +186,35 @@ func (s *Agent) Init(ctx context.Context) error {
 		return fmt.Errorf("RunOnce mode requires an initial query to be provided")
 	}
 
-	// TODO: this is ephemeral for now, but in the future, we will support
-	// session persistence.
-	sessionFromStore, ok := s.ChatMessageStore.(*sessions.Session)
-	if ok {
-		sessionMetadata, err := sessionFromStore.LoadMetadata()
-		if err != nil {
-			return fmt.Errorf("failed to load metadata for stored chat messages")
-		}
-		messages := sessionFromStore.ChatMessages()
-		s.session = &api.Session{
-			ID:               sessionFromStore.ID,
-			Messages:         messages,
-			AgentState:       api.AgentStateIdle,
-			CreatedAt:        sessionMetadata.CreatedAt,
-			LastModified:     sessionMetadata.LastAccessed,
-			ChatMessageStore: s.ChatMessageStore,
+	// TODO: Remove this check when session persistence is default
+	if cms, ok := s.ChatMessageStore.(*sessions.Session); ok && cms != nil {
+		sessionFromStore, ok := s.ChatMessageStore.(*sessions.Session)
+		if ok && sessionFromStore != nil {
+			sessionMetadata, err := sessionFromStore.LoadMetadata()
+			if err != nil {
+				return fmt.Errorf("failed to load metadata for stored chat messages")
+			}
+			messages := sessionFromStore.ChatMessages()
+			s.session = &api.Session{
+				ID:               sessionFromStore.ID,
+				Messages:         messages,
+				AgentState:       api.AgentStateIdle,
+				CreatedAt:        sessionMetadata.CreatedAt,
+				LastModified:     sessionMetadata.LastAccessed,
+				ChatMessageStore: s.ChatMessageStore,
+			}
+		} else {
+			return fmt.Errorf("failed to initialize chat message session")
 		}
 	} else {
-		return fmt.Errorf("failed to initialize chat message session")
+		// TODO: Remove this block when session persistence is default
+		s.session = &api.Session{
+			ID:           uuid.New().String(),
+			Messages:     []*api.Message{},
+			AgentState:   api.AgentStateIdle,
+			CreatedAt:    time.Now(),
+			LastModified: time.Now(),
+		}
 	}
 
 	// Create a temporary working directory
@@ -233,7 +245,11 @@ func (s *Agent) Init(ctx context.Context) error {
 			Jitter:         true,
 		},
 	)
-	s.llmChat.Initialize(s.session.ChatMessageStore.ChatMessages())
+	if s.session.ChatMessageStore != nil {
+		s.llmChat.Initialize(s.session.ChatMessageStore.ChatMessages())
+	} else {
+		klog.Warning("Failed to initialize llm chat: ChatMessageStore is nil")
+	}
 
 	if s.MCPClientEnabled {
 		if err := s.InitializeMCPClient(ctx); err != nil {
@@ -645,10 +661,15 @@ func (c *Agent) handleMetaQuery(ctx context.Context, query string) (answer strin
 	switch query {
 	case "clear", "reset":
 		c.sessionMu.Lock()
-		if err := c.session.ChatMessageStore.ClearChatMessages(); err != nil {
-			return "Failed to clear the conversation", false, err
+		// TODO: Remove this check when session persistence is default
+		if cms, ok := c.session.ChatMessageStore.(*sessions.Session); ok && cms != nil {
+			if err := c.session.ChatMessageStore.ClearChatMessages(); err != nil {
+				return "Failed to clear the conversation", false, err
+			}
+			c.llmChat.Initialize(c.session.ChatMessageStore.ChatMessages())
+		} else {
+			c.session.Messages = []*api.Message{}
 		}
-		c.llmChat.Initialize(c.session.ChatMessageStore.ChatMessages())
 		c.sessionMu.Unlock()
 		return "Cleared the conversation.", true, nil
 	case "exit", "quit":
@@ -665,16 +686,20 @@ func (c *Agent) handleMetaQuery(ctx context.Context, query string) (answer strin
 	case "tools":
 		return "Available tools:\n\n  - " + strings.Join(c.Tools.Names(), "\n  - ") + "\n\n", true, nil
 	case "session":
-		metadata, err := c.session.ChatMessageStore.(*sessions.Session).LoadMetadata()
-		if err != nil {
-			return "", false, fmt.Errorf("failed to load session metadata: %w", err)
+		if c.session.ChatMessageStore != nil {
+			metadata, err := c.session.ChatMessageStore.(*sessions.Session).LoadMetadata()
+			if err != nil {
+				return "", false, fmt.Errorf("failed to load session metadata: %w", err)
+			}
+			return fmt.Sprintf("Current session:\n\nID: %s\nCreated: %s\nLast Accessed: %s\nModel: %s\nProvider: %s\n\n",
+				c.session.ID,
+				metadata.CreatedAt.Format("2006-01-02 15:04:05"),
+				metadata.LastAccessed.Format("2006-01-02 15:04:05"),
+				metadata.ModelID,
+				metadata.ProviderID), true, nil
+		} else {
+			return "Session not found (session persistence not enabled)", true, nil
 		}
-		return fmt.Sprintf("Current session:\n\nID: %s\nCreated: %s\nLast Accessed: %s\nModel: %s\nProvider: %s\n\n",
-			c.session.ID,
-			metadata.CreatedAt.Format("2006-01-02 15:04:05"),
-			metadata.LastAccessed.Format("2006-01-02 15:04:05"),
-			metadata.ModelID,
-			metadata.ProviderID), true, nil
 	case "sessions":
 		manager, err := sessions.NewSessionManager()
 		if err != nil {
