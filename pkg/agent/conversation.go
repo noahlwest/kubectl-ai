@@ -246,7 +246,10 @@ func (s *Agent) Init(ctx context.Context) error {
 		},
 	)
 	if s.session.ChatMessageStore != nil {
-		s.llmChat.Initialize(s.session.ChatMessageStore.ChatMessages())
+		err := s.llmChat.Initialize(s.session.ChatMessageStore.ChatMessages())
+		if err != nil {
+			return fmt.Errorf("initializing chat session: %w", err)
+		}
 	} else {
 		klog.Warning("Failed to initialize llm chat: ChatMessageStore is nil")
 	}
