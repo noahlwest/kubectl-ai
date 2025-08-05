@@ -268,6 +268,12 @@ extraPromptPaths: []            # Additional prompt template paths
 
 # Debug and trace settings
 tracePath: "/tmp/kubectl-ai-trace.txt" # Path to trace file
+
+# Session persistence settings
+sessionID: "" # ID of the session to resume
+newSession: bool # Create a new session
+listSessions: bool # List available sessions
+deleteSession: "" # ID of the session to delete
 ```
 
 </details>
