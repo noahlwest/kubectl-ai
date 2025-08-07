@@ -257,12 +257,6 @@ func (u *TerminalUI) handleMessage(msg *api.Message) {
 		text = msg.Payload.(string)
 		klog.Infof("Received user input request with payload: %q", text)
 
-		// If this is the greeting message, just display it and don't prompt for input
-		if text == "Hey there, what can I help you with today?" || strings.Contains(text, "Welcome back. What can I help you with today?") {
-			fmt.Printf("\n %s\n\n", text)
-			return
-		}
-
 		var query string
 		if u.useTTYForInput {
 			tReader, err := u.ttyReader()

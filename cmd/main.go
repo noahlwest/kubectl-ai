@@ -118,7 +118,7 @@ type Options struct {
 	SkipVerifySSL bool `json:"skipVerifySSL,omitempty"`
 
 	// Session management options
-	SessionID     string `json:"sessionID,omitempty"`
+	ResumeSession string `json:"resumeSession,omitempty"`
 	NewSession    bool   `json:"newSession,omitempty"`
 	ListSessions  bool   `json:"listSessions,omitempty"`
 	DeleteSession string `json:"deleteSession,omitempty"`
@@ -167,7 +167,7 @@ func (o *Options) InitDefaults() {
 	o.SSEndpointPort = 9080
 
 	// Session management options
-	o.SessionID = ""
+	o.ResumeSession = ""
 	o.NewSession = false
 	o.ListSessions = false
 	o.DeleteSession = ""
@@ -312,7 +312,7 @@ func (opt *Options) bindCLIFlags(f *pflag.FlagSet) error {
 	f.StringVar(&opt.UIListenAddress, "ui-listen-address", opt.UIListenAddress, "address to listen for the HTML UI.")
 	f.BoolVar(&opt.SkipVerifySSL, "skip-verify-ssl", opt.SkipVerifySSL, "skip verifying the SSL certificate of the LLM provider")
 
-	f.StringVar(&opt.SessionID, "session", opt.SessionID, "session ID to use (use 'latest for the most recent session)")
+	f.StringVar(&opt.ResumeSession, "resume-session", opt.ResumeSession, "ID of session to resume (use 'latest' for the most recent session)")
 	f.BoolVar(&opt.NewSession, "new-session", opt.NewSession, "create a new session")
 	f.BoolVar(&opt.ListSessions, "list-sessions", opt.ListSessions, "list all available sessions")
 	f.StringVar(&opt.DeleteSession, "delete-session", opt.DeleteSession, "delete a session by ID")
@@ -383,13 +383,13 @@ func RunRootCommand(ctx context.Context, opt Options, args []string) error {
 	var currentSession *sessions.Session
 	var sessionManager *sessions.SessionManager
 
-	sessionManager, err = sessions.NewSessionManager()
-	if err != nil {
-		return fmt.Errorf("failed to create session manager: %w", err)
-	}
-
 	// TODO: Remove this when session persistence is default
-	if opt.NewSession || opt.SessionID != "" {
+	if opt.NewSession || opt.ResumeSession != "" {
+		sessionManager, err = sessions.NewSessionManager()
+		if err != nil {
+			return fmt.Errorf("failed to create session manager: %w", err)
+		}
+
 		// Handle session creation or loading
 		if opt.NewSession {
 			// Create a new session
@@ -405,7 +405,7 @@ func RunRootCommand(ctx context.Context, opt Options, args []string) error {
 		} else {
 			// Load existing session
 			var sessionID string
-			if opt.SessionID == "" || opt.SessionID == "latest" {
+			if opt.ResumeSession == "" || opt.ResumeSession == "latest" {
 				// Get the latest session
 				currentSession, err = sessionManager.GetLatestSession()
 				if err != nil {
@@ -424,7 +424,7 @@ func RunRootCommand(ctx context.Context, opt Options, args []string) error {
 					klog.Infof("Created new session: %s\n", currentSession.ID)
 				}
 			} else {
-				sessionID = opt.SessionID
+				sessionID = opt.ResumeSession
 				currentSession, err = sessionManager.FindSessionByID(sessionID)
 				if err != nil {
 					return fmt.Errorf("session %s not found: %w", sessionID, err)

@@ -209,6 +209,15 @@ You can even combine a positional argument with stdin input. The positional argu
 cat error.log | kubectl-ai "explain the error"
 ```
 
+We also support persistence between runs with an opt-in. This lets you save a session to the local filesystem, and resume it to maintain previous context. It even works between different interfaces!
+
+```shell
+kubectl-ai --new-session # start a new session
+kubectl-ai --list-sessions # list all saved sessions
+kubectl-ai --resume-session 20250807-510872 # resume session 20250807-510872
+kubectl-ai --delete-session 20250807-510872 # delete session 20250807-510872
+```
+
 ## Configuration
 
 You can also configure `kubectl-ai` using a YAML configuration file at `~/.config/kubectl-ai/config.yaml`:
@@ -268,12 +277,6 @@ extraPromptPaths: []            # Additional prompt template paths
 
 # Debug and trace settings
 tracePath: "/tmp/kubectl-ai-trace.txt" # Path to trace file
-
-# Session persistence settings
-sessionID: "" # ID of the session to resume
-newSession: bool # Create a new session
-listSessions: bool # List available sessions
-deleteSession: "" # ID of the session to delete
 ```
 
 </details>

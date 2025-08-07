@@ -36,9 +36,6 @@ type Metadata struct {
 	ModelID      string    `json:"modelID"`
 	CreatedAt    time.Time `json:"createdAt"`
 	LastAccessed time.Time `json:"lastAccessed"`
-	TotalTokens  int64     `json:"totalTokens,omitempty"`
-	TotalCost    float64   `json:"totalCost,omitempty"`
-	MessageCount int       `json:"messageCount,omitempty"`
 }
 
 // Session represents a single chat session.
@@ -47,9 +44,6 @@ type Session struct {
 	Path string
 	mu   sync.Mutex
 }
-
-// Session implements the ChatMessageStore interface
-var _ api.ChatMessageStore = &Session{}
 
 // HistoryPath returns the path to the history file for the session.
 func (s *Session) HistoryPath() string {
@@ -89,19 +83,6 @@ func (s *Session) UpdateLastAccessed() error {
 	if err != nil {
 		return err
 	}
-	m.LastAccessed = time.Now()
-	return s.SaveMetadata(m)
-}
-
-// UpdateUsage updates the usage statistics in the metadata.
-func (s *Session) UpdateUsage(tokens int64, cost float64, messageCount int) error {
-	m, err := s.LoadMetadata()
-	if err != nil {
-		return err
-	}
-	m.TotalTokens += tokens
-	m.TotalCost += cost
-	m.MessageCount += messageCount
 	m.LastAccessed = time.Now()
 	return s.SaveMetadata(m)
 }

@@ -142,6 +142,8 @@ func (c *Agent) addMessage(source api.MessageSource, messageType api.MessageType
 	}
 	if cms, ok := c.session.ChatMessageStore.(*sessions.Session); ok && cms != nil {
 		c.session.ChatMessageStore.AddChatMessage(message)
+	} else {
+		c.session.Messages = append(c.session.Messages, message)
 	}
 	c.session.LastModified = time.Now()
 	c.Output <- message
@@ -328,11 +330,11 @@ func (c *Agent) Run(ctx context.Context, initialQuery string) error {
 			if len(c.session.Messages) > 0 {
 				// Resuming existing session
 				greetingMessage := "Welcome back. What can I help you with today?\n (Don't want to continue your last session? Use --new-session)"
-				c.addMessage(api.MessageSourceAgent, api.MessageTypeUserInputRequest, greetingMessage)
+				c.addMessage(api.MessageSourceAgent, api.MessageTypeText, greetingMessage)
 			} else {
 				// Starting new session
 				greetingMessage := "Hey there, what can I help you with today?"
-				c.addMessage(api.MessageSourceAgent, api.MessageTypeUserInputRequest, greetingMessage)
+				c.addMessage(api.MessageSourceAgent, api.MessageTypeText, greetingMessage)
 			}
 		}
 		for {
