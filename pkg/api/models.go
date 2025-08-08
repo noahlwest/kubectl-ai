@@ -123,8 +123,5 @@ type ChatMessageStore interface {
 }
 
 func (s *Session) AllMessages() []*Message {
-	if s.ChatMessageStore == nil {
-		return s.Messages
-	}
 	return s.ChatMessageStore.ChatMessages()
 }

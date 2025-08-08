@@ -140,11 +140,10 @@ func (c *Agent) addMessage(source api.MessageSource, messageType api.MessageType
 		Payload:   payload,
 		Timestamp: time.Now(),
 	}
-	if cms, ok := c.session.ChatMessageStore.(*sessions.Session); ok && cms != nil {
+	if c.session.ChatMessageStore != nil {
 		c.session.ChatMessageStore.AddChatMessage(message)
-	} else {
-		c.session.Messages = append(c.session.Messages, message)
 	}
+
 	c.session.LastModified = time.Now()
 	c.Output <- message
 	return message
@@ -187,35 +186,34 @@ func (s *Agent) Init(ctx context.Context) error {
 	if s.InitialQuery == "" && s.RunOnce {
 		return fmt.Errorf("RunOnce mode requires an initial query to be provided")
 	}
-
-	// TODO: Remove this check when session persistence is default
-	if cms, ok := s.ChatMessageStore.(*sessions.Session); ok && cms != nil {
-		sessionFromStore, ok := s.ChatMessageStore.(*sessions.Session)
-		if ok && sessionFromStore != nil {
-			sessionMetadata, err := sessionFromStore.LoadMetadata()
-			if err != nil {
-				return fmt.Errorf("failed to load metadata for stored chat messages")
-			}
-			messages := sessionFromStore.ChatMessages()
-			s.session = &api.Session{
-				ID:               sessionFromStore.ID,
-				Messages:         messages,
-				AgentState:       api.AgentStateIdle,
-				CreatedAt:        sessionMetadata.CreatedAt,
-				LastModified:     sessionMetadata.LastAccessed,
-				ChatMessageStore: s.ChatMessageStore,
-			}
-		} else {
-			return fmt.Errorf("failed to initialize chat message session")
+	// Assert Session implements ChatMessageStore
+	var _ api.ChatMessageStore = &sessions.Session{}
+	if sessionFromStore, ok := s.ChatMessageStore.(*sessions.Session); ok && sessionFromStore != nil {
+		sessionMetadata, err := sessionFromStore.LoadMetadata()
+		if err != nil {
+			return fmt.Errorf("failed to load metadata for stored chat messages")
+		}
+		s.session = &api.Session{
+			ID:               sessionFromStore.ID,
+			Messages:         sessionFromStore.ChatMessages(),
+			AgentState:       api.AgentStateIdle,
+			CreatedAt:        sessionMetadata.CreatedAt,
+			LastModified:     sessionMetadata.LastAccessed,
+			ChatMessageStore: s.ChatMessageStore,
 		}
 	} else {
-		// TODO: Remove this block when session persistence is default
+		// This handles InMemoryChatStore or when no persistence is configured.
+		// Assert InMemoryChatStore implements ChatMessageStore
+		var _ api.ChatMessageStore = &sessions.InMemoryChatStore{}
+		s.ChatMessageStore = sessions.NewInMemoryChatStore()
+
 		s.session = &api.Session{
-			ID:           uuid.New().String(),
-			Messages:     []*api.Message{},
-			AgentState:   api.AgentStateIdle,
-			CreatedAt:    time.Now(),
-			LastModified: time.Now(),
+			ID:               uuid.New().String(),
+			Messages:         s.ChatMessageStore.ChatMessages(),
+			AgentState:       api.AgentStateIdle,
+			CreatedAt:        time.Now(),
+			LastModified:     time.Now(),
+			ChatMessageStore: s.ChatMessageStore,
 		}
 	}
 
@@ -667,14 +665,10 @@ func (c *Agent) handleMetaQuery(ctx context.Context, query string) (answer strin
 	case "clear", "reset":
 		c.sessionMu.Lock()
 		// TODO: Remove this check when session persistence is default
-		if cms, ok := c.session.ChatMessageStore.(*sessions.Session); ok && cms != nil {
-			if err := c.session.ChatMessageStore.ClearChatMessages(); err != nil {
-				return "Failed to clear the conversation", false, err
-			}
-			c.llmChat.Initialize(c.session.ChatMessageStore.ChatMessages())
-		} else {
-			c.session.Messages = []*api.Message{}
+		if err := c.session.ChatMessageStore.ClearChatMessages(); err != nil {
+			return "Failed to clear the conversation", false, err
 		}
+		c.llmChat.Initialize(c.session.ChatMessageStore.ChatMessages())
 		c.sessionMu.Unlock()
 		return "Cleared the conversation.", true, nil
 	case "exit", "quit":
