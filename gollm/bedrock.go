@@ -28,6 +28,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime"
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime/document"
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime/types"
+	"github.com/GoogleCloudPlatform/kubectl-ai/pkg/api"
 	"k8s.io/klog/v2"
 )
 
@@ -142,6 +143,10 @@ type bedrockChat struct {
 	messages     []types.Message
 	toolConfig   *types.ToolConfiguration
 	functionDefs []*FunctionDefinition
+}
+
+func (cs *bedrockChat) Initialize(history []*api.Message) error {
+	return fmt.Errorf("Initialize not yet implemented for bedrock")
 }
 
 // Send sends a message to the chat and returns the response
