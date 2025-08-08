@@ -16,6 +16,7 @@ package sessions
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"sync"
@@ -168,4 +169,17 @@ func (s *Session) ClearChatMessages() error {
 		return err
 	}
 	return f.Close()
+}
+
+func (s *Session) String() (string, error) {
+	metadata, err := s.LoadMetadata()
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("Current session:\n\nID: %s\nCreated: %s\nLast Accessed: %s\nModel: %s\nProvider: %s\n\n",
+		s.ID,
+		metadata.CreatedAt.Format("2006-01-02 15:04:05"),
+		metadata.LastAccessed.Format("2006-01-02 15:04:05"),
+		metadata.ModelID,
+		metadata.ProviderID), nil
 }

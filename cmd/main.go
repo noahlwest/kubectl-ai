@@ -32,6 +32,7 @@ import (
 
 	"github.com/GoogleCloudPlatform/kubectl-ai/gollm"
 	"github.com/GoogleCloudPlatform/kubectl-ai/pkg/agent"
+	"github.com/GoogleCloudPlatform/kubectl-ai/pkg/api"
 	"github.com/GoogleCloudPlatform/kubectl-ai/pkg/journal"
 	"github.com/GoogleCloudPlatform/kubectl-ai/pkg/sessions"
 	"github.com/GoogleCloudPlatform/kubectl-ai/pkg/tools"
@@ -380,7 +381,7 @@ func RunRootCommand(ctx context.Context, opt Options, args []string) error {
 	defer llmClient.Close()
 
 	// Initialize session management
-	var currentSession *sessions.Session
+	var chatStore api.ChatMessageStore
 	var sessionManager *sessions.SessionManager
 
 	// TODO: Remove this when session persistence is default
@@ -397,47 +398,49 @@ func RunRootCommand(ctx context.Context, opt Options, args []string) error {
 				ProviderID: opt.ProviderID,
 				ModelID:    opt.ModelID,
 			}
-			currentSession, err = sessionManager.NewSession(meta)
+			chatStore, err = sessionManager.NewSession(meta)
 			if err != nil {
 				return fmt.Errorf("failed to create a new session: %w", err)
 			}
-			klog.Infof("Created new session: %s\n", currentSession.ID)
+			klog.Infof("Created new session: %s\n", chatStore.(*sessions.Session).ID)
 		} else {
 			// Load existing session
 			var sessionID string
 			if opt.ResumeSession == "" || opt.ResumeSession == "latest" {
 				// Get the latest session
-				currentSession, err = sessionManager.GetLatestSession()
+				chatStore, err = sessionManager.GetLatestSession()
 				if err != nil {
 					return fmt.Errorf("failed to get latest session: %w", err)
 				}
-				if currentSession == nil {
+				if chatStore == nil {
 					// No sessions exist, create a new one
 					meta := sessions.Metadata{
 						ProviderID: opt.ProviderID,
 						ModelID:    opt.ModelID,
 					}
-					currentSession, err = sessionManager.NewSession(meta)
+					chatStore, err = sessionManager.NewSession(meta)
 					if err != nil {
 						return fmt.Errorf("failed to create new session: %w", err)
 					}
-					klog.Infof("Created new session: %s\n", currentSession.ID)
+					klog.Infof("Created new session: %s\n", chatStore.(*sessions.Session).ID)
 				}
 			} else {
 				sessionID = opt.ResumeSession
-				currentSession, err = sessionManager.FindSessionByID(sessionID)
+				chatStore, err = sessionManager.FindSessionByID(sessionID)
 				if err != nil {
 					return fmt.Errorf("session %s not found: %w", sessionID, err)
 				}
 			}
 
-			if currentSession != nil {
+			if chatStore != nil {
 				// Update last accessed time
-				if err := currentSession.UpdateLastAccessed(); err != nil {
+				if err := chatStore.(*sessions.Session).UpdateLastAccessed(); err != nil {
 					klog.Warningf("Failed to update session last accessed time: %v", err)
 				}
 			}
 		}
+	} else {
+		chatStore = sessions.NewInMemoryChatStore()
 	}
 
 	var recorder journal.Recorder
@@ -470,7 +473,7 @@ func RunRootCommand(ctx context.Context, opt Options, args []string) error {
 		MCPClientEnabled:   opt.MCPClient,
 		RunOnce:            opt.Quiet,
 		InitialQuery:       queryFromCmd,
-		ChatMessageStore:   currentSession,
+		ChatMessageStore:   chatStore,
 	}
 
 	err = k8sAgent.Init(ctx)

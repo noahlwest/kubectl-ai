@@ -117,6 +117,12 @@ type Agent struct {
 	ChatMessageStore api.ChatMessageStore
 }
 
+// Assert Session implements ChatMessageStore
+var _ api.ChatMessageStore = &sessions.Session{}
+
+// Assert InMemoryChatStore implements ChatMessageStore
+var _ api.ChatMessageStore = &sessions.InMemoryChatStore{}
+
 func (s *Agent) Session() *api.Session {
 	s.sessionMu.Lock()
 	defer s.sessionMu.Unlock()
@@ -186,35 +192,25 @@ func (s *Agent) Init(ctx context.Context) error {
 	if s.InitialQuery == "" && s.RunOnce {
 		return fmt.Errorf("RunOnce mode requires an initial query to be provided")
 	}
-	// Assert Session implements ChatMessageStore
-	var _ api.ChatMessageStore = &sessions.Session{}
-	if sessionFromStore, ok := s.ChatMessageStore.(*sessions.Session); ok && sessionFromStore != nil {
-		sessionMetadata, err := sessionFromStore.LoadMetadata()
-		if err != nil {
-			return fmt.Errorf("failed to load metadata for stored chat messages")
-		}
-		s.session = &api.Session{
-			ID:               sessionFromStore.ID,
-			Messages:         sessionFromStore.ChatMessages(),
-			AgentState:       api.AgentStateIdle,
-			CreatedAt:        sessionMetadata.CreatedAt,
-			LastModified:     sessionMetadata.LastAccessed,
-			ChatMessageStore: s.ChatMessageStore,
-		}
-	} else {
-		// This handles InMemoryChatStore or when no persistence is configured.
-		// Assert InMemoryChatStore implements ChatMessageStore
-		var _ api.ChatMessageStore = &sessions.InMemoryChatStore{}
-		s.ChatMessageStore = sessions.NewInMemoryChatStore()
 
-		s.session = &api.Session{
-			ID:               uuid.New().String(),
-			Messages:         s.ChatMessageStore.ChatMessages(),
-			AgentState:       api.AgentStateIdle,
-			CreatedAt:        time.Now(),
-			LastModified:     time.Now(),
-			ChatMessageStore: s.ChatMessageStore,
+	s.session = &api.Session{
+		Messages:         s.ChatMessageStore.ChatMessages(),
+		AgentState:       api.AgentStateIdle,
+		ChatMessageStore: s.ChatMessageStore,
+	}
+
+	if session, ok := s.ChatMessageStore.(*sessions.Session); ok {
+		metadata, err := session.LoadMetadata()
+		if err != nil {
+			return fmt.Errorf("failed to load session metadata: %w", err)
 		}
+		s.session.ID = session.ID
+		s.session.CreatedAt = metadata.CreatedAt
+		s.session.LastModified = metadata.LastAccessed
+	} else {
+		s.session.ID = uuid.New().String()
+		s.session.CreatedAt = time.Now()
+		s.session.LastModified = time.Now()
 	}
 
 	// Create a temporary working directory
@@ -245,13 +241,9 @@ func (s *Agent) Init(ctx context.Context) error {
 			Jitter:         true,
 		},
 	)
-	if s.session.ChatMessageStore != nil {
-		err := s.llmChat.Initialize(s.session.ChatMessageStore.ChatMessages())
-		if err != nil {
-			return fmt.Errorf("initializing chat session: %w", err)
-		}
-	} else {
-		klog.Warning("Failed to initialize llm chat: ChatMessageStore is nil")
+	err = s.llmChat.Initialize(s.session.ChatMessageStore.ChatMessages())
+	if err != nil {
+		return fmt.Errorf("initializing chat session: %w", err)
 	}
 
 	if s.MCPClientEnabled {
@@ -685,20 +677,15 @@ func (c *Agent) handleMetaQuery(ctx context.Context, query string) (answer strin
 	case "tools":
 		return "Available tools:\n\n  - " + strings.Join(c.Tools.Names(), "\n  - ") + "\n\n", true, nil
 	case "session":
-		if c.session.ChatMessageStore != nil {
-			metadata, err := c.session.ChatMessageStore.(*sessions.Session).LoadMetadata()
+		if s, ok := c.ChatMessageStore.(*sessions.Session); ok {
+			out, err := s.String()
 			if err != nil {
-				return "", false, fmt.Errorf("failed to load session metadata: %w", err)
+				return "", false, fmt.Errorf("failed to get session string: %w", err)
 			}
-			return fmt.Sprintf("Current session:\n\nID: %s\nCreated: %s\nLast Accessed: %s\nModel: %s\nProvider: %s\n\n",
-				c.session.ID,
-				metadata.CreatedAt.Format("2006-01-02 15:04:05"),
-				metadata.LastAccessed.Format("2006-01-02 15:04:05"),
-				metadata.ModelID,
-				metadata.ProviderID), true, nil
-		} else {
-			return "Session not found (session persistence not enabled)", true, nil
+			return out, true, nil
 		}
+		return "Session not found (session persistence not enabled)", true, nil
+
 	case "sessions":
 		manager, err := sessions.NewSessionManager()
 		if err != nil {
