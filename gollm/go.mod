@@ -10,10 +10,10 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.9.0
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/cognitiveservices/armcognitiveservices v1.7.0
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/subscription/armsubscription v1.2.0
+	github.com/GoogleCloudPlatform/kubectl-ai v0.0.19
 	github.com/aws/aws-sdk-go-v2 v1.36.6
 	github.com/aws/aws-sdk-go-v2/config v1.29.18
 	github.com/aws/aws-sdk-go-v2/service/bedrockruntime v1.31.1
-	github.com/GoogleCloudPlatform/kubectl-ai v0.0.19
 	github.com/ollama/ollama v0.6.5
 	github.com/openai/openai-go v1.11.0
 	google.golang.org/genai v1.8.0
