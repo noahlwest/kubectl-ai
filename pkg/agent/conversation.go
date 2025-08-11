@@ -308,7 +308,7 @@ func (c *Agent) Run(ctx context.Context, initialQuery string) error {
 				// initialQuery is the 'exit' or 'quit' metaquery
 				if c.AgentState() == api.AgentStateExited {
 					c.addMessage(api.MessageSourceAgent, api.MessageTypeText, answer)
-					c.Output <- ctx.Done()
+					close(c.Output)
 					return
 				}
 				// we handled the meta query, so we don't need to run the agentic loop
@@ -377,7 +377,7 @@ func (c *Agent) Run(ctx context.Context, initialQuery string) error {
 						// metaquery set the state to 'Exited', so we should exit
 						if c.AgentState() == api.AgentStateExited {
 							c.addMessage(api.MessageSourceAgent, api.MessageTypeText, answer)
-							c.Output <- ctx.Done()
+							close(c.Output)
 							return
 						}
 						// we handled the meta query, so we don't need to run the agentic loop
