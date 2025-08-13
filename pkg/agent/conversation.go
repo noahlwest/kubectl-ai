@@ -76,6 +76,7 @@ type Agent struct {
 	// to be combined with PromptTemplateFile
 	ExtraPromptPaths []string
 	Model            string
+	Provider         string
 
 	RemoveWorkDir bool
 
@@ -701,6 +702,40 @@ func (c *Agent) handleMetaQuery(ctx context.Context, query string) (answer strin
 			return out, true, nil
 		}
 		return "Session not found (session persistence not enabled)", true, nil
+
+	case "save-session":
+		c.sessionMu.Lock()
+		defer c.sessionMu.Unlock()
+
+		manager, err := sessions.NewSessionManager()
+		if err != nil {
+			return "", false, fmt.Errorf("failed to create session manager: %w", err)
+		}
+		foundSession, _ := manager.FindSessionByID(c.session.ID)
+		if foundSession != nil {
+			return "Session already exists", false, nil
+		}
+		metadata := sessions.Metadata{
+			CreatedAt:    time.Now(),
+			LastAccessed: time.Now(),
+			ModelID:      c.Model,
+			ProviderID:   c.Provider,
+		}
+		newSession, err := manager.NewSession(metadata)
+		if err != nil {
+			return "", false, fmt.Errorf("failed to create new session: %w", err)
+		}
+
+		messages := c.ChatMessageStore.ChatMessages()
+		if err := newSession.SetChatMessages(messages); err != nil {
+			return "", false, fmt.Errorf("failed to save chat messages to new session: %w", err)
+		}
+
+		c.ChatMessageStore = newSession
+		c.session.ChatMessageStore = newSession
+		c.llmChat.Initialize(c.ChatMessageStore.ChatMessages())
+
+		return fmt.Sprintf("Session saved with ID: %s", newSession.ID), true, nil
 
 	case "sessions":
 		manager, err := sessions.NewSessionManager()
