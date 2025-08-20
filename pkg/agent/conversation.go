@@ -765,7 +765,7 @@ func (c *Agent) SaveSession() (string, error) {
 		return foundSession.ID, nil
 	}
 	metadata := sessions.Metadata{
-		CreatedAt:    time.Now(),
+		CreatedAt:    c.session.CreatedAt,
 		LastAccessed: time.Now(),
 		ModelID:      c.Model,
 		ProviderID:   c.Provider,
