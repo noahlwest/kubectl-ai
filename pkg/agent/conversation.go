@@ -762,7 +762,7 @@ func (c *Agent) SaveSession() (string, error) {
 	}
 	foundSession, _ := manager.FindSessionByID(c.session.ID)
 	if foundSession != nil {
-		return "", fmt.Errorf("session with ID %s already exists", foundSession.ID)
+		return foundSession.ID, nil
 	}
 	metadata := sessions.Metadata{
 		CreatedAt:    time.Now(),
