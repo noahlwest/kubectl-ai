@@ -355,24 +355,6 @@ func (c *Agent) Run(ctx context.Context, initialQuery string) error {
 					log.Info("Received input from channel", "userInput", userInput)
 					if userInput == io.EOF {
 						log.Info("Agent loop done, EOF received")
-						if _, ok := c.ChatMessageStore.(*sessions.InMemoryChatStore); ok {
-							c.addMessage(api.MessageSourceAgent, api.MessageTypeText, "Save session before quitting? (y/n)")
-							c.addMessage(api.MessageSourceAgent, api.MessageTypeUserInputRequest, ">>>")
-							response := <-c.Input
-							resp, ok := response.(*api.UserInputResponse)
-							if ok {
-								if resp.Query == "y" || resp.Query == "yes" {
-									sessionID, err := c.SaveSession()
-									if err != nil {
-										log.Error(err, "error saving session")
-									} else {
-										c.addMessage(api.MessageSourceAgent, api.MessageTypeText, "Session saved as "+sessionID)
-									}
-								} else {
-									c.addMessage(api.MessageSourceAgent, api.MessageTypeText, "Quitting without saving session.")
-								}
-							}
-						}
 						c.setAgentState(api.AgentStateExited)
 						return
 					}
