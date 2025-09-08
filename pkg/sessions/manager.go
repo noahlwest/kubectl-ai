@@ -109,10 +109,29 @@ func (sm *SessionManager) GetLatestSession() (*Session, error) {
 	if len(sessions) == 0 {
 		return nil, nil // No sessions found
 	}
-	return sessions[0], nil
+
+	var latestSession *Session
+	var latestTime time.Time
+
+	// TODO: LoadMetadata() reads from filesystem, if this is too costly, we
+	// can come up with a different solution.
+	for _, s := range sessions {
+		meta, err := s.LoadMetadata()
+		if err != nil {
+			// Warn in case a metadata is corrupted
+			fmt.Printf("warn: could not load metadata for session %s: %v\n", s.ID, err)
+			continue
+		}
+		if latestSession == nil || meta.LastAccessed.After(latestTime) {
+			latestSession = s
+			latestTime = meta.LastAccessed
+		}
+	}
+
+	return latestSession, nil
 }
 
-// FindSessionByID finds a ession by its ID.
+// FindSessionByID finds a session by its ID.
 func (sm *SessionManager) FindSessionByID(id string) (*Session, error) {
 	sessions, err := sm.ListSessions()
 	if err != nil {
