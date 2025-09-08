@@ -21,6 +21,8 @@ import (
 	"path/filepath"
 	"sort"
 	"time"
+
+	"k8s.io/klog/v2"
 )
 
 const (
@@ -119,7 +121,7 @@ func (sm *SessionManager) GetLatestSession() (*Session, error) {
 		meta, err := s.LoadMetadata()
 		if err != nil {
 			// Warn in case a metadata is corrupted
-			fmt.Printf("warn: could not load metadata for session %s: %v\n", s.ID, err)
+			klog.Warningf("could not load metadata for session %s: %v", s.ID, err)
 			continue
 		}
 		if latestSession == nil || meta.LastAccessed.After(latestTime) {

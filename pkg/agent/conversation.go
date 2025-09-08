@@ -831,8 +831,9 @@ func (c *Agent) loadSession(sessionID string) error {
 	}
 	c.session.ID = session.ID
 	c.session.CreatedAt = metadata.CreatedAt
-	c.session.LastModified = time.Now()
-	metadata.LastAccessed = time.Now()
+	now := time.Now()
+	c.session.LastModified = now
+	metadata.LastAccessed = now
 	if err := session.SaveMetadata(metadata); err != nil {
 		return fmt.Errorf("failed to update session metadata: %w", err)
 	}
