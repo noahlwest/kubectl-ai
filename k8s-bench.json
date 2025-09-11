@@ -1,10 +1,10 @@
 [
   {
-    "name": "create-network-policy",
+    "name": "create-canary-deployment",
     "llmConfig": {
-      "id": "shim_disabled-gemini-gemini-2.5-flash-preview-04-17",
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
       "provider": "gemini",
-      "model": "gemini-2.5-flash-preview-04-17",
+      "model": "gemini-2.5-flash",
       "enableToolUseShim": false,
       "quiet": true
     },
@@ -12,11 +12,11 @@
     "error": ""
   },
   {
-    "name": "create-network-policy",
+    "name": "create-canary-deployment",
     "llmConfig": {
-      "id": "shim_disabled-gemini-gemini-2.5-pro-preview-03-25",
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
       "provider": "gemini",
-      "model": "gemini-2.5-pro-preview-03-25",
+      "model": "gemini-2.5-pro",
       "enableToolUseShim": false,
       "quiet": true
     },
@@ -24,23 +24,96 @@
     "error": ""
   },
   {
-    "name": "create-network-policy",
+    "name": "create-canary-deployment",
     "llmConfig": {
-      "id": "shim_enabled-gemini-gemma-3-27b-it",
-      "provider": "gemini",
-      "model": "gemma-3-27b-it",
+      "id": "shim_enabled-openai-google/gemma-3-27b-it",
+      "provider": "openai",
+      "model": "google/gemma-3-27b-it",
       "enableToolUseShim": true,
       "quiet": true
     },
-    "result": "",
-    "error": "running command /Users/sunilarora/work/kubectl-ai/k8s-bench/tasks/create-network-policy/verify.sh: exit status 1"
+    "result": "fail",
+    "failures": [
+      {
+        "message": "verifier script failed"
+      }
+    ],
+    "error": ""
+  },
+  {
+    "name": "create-network-policy",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "fail",
+    "failures": [
+      {
+        "message": "verifier script failed"
+      }
+    ],
+    "error": ""
+  },
+  {
+    "name": "create-network-policy",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
+      "provider": "gemini",
+      "model": "gemini-2.5-pro",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "fail",
+    "failures": [
+      {
+        "message": "verifier script failed"
+      }
+    ],
+    "error": ""
+  },
+  {
+    "name": "create-network-policy",
+    "llmConfig": {
+      "id": "shim_enabled-openai-google/gemma-3-27b-it",
+      "provider": "openai",
+      "model": "google/gemma-3-27b-it",
+      "enableToolUseShim": true,
+      "quiet": true
+    },
+    "result": "fail",
+    "failures": [
+      {
+        "message": "verifier script failed"
+      }
+    ],
+    "error": ""
   },
   {
     "name": "create-pod",
     "llmConfig": {
-      "id": "shim_disabled-gemini-gemini-2.5-flash-preview-04-17",
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
       "provider": "gemini",
-      "model": "gemini-2.5-flash-preview-04-17",
+      "model": "gemini-2.5-flash",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "failures": [
+      {
+        "message": "verifier script failed"
+      }
+    ],
+    "error": ""
+  },
+  {
+    "name": "create-pod",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
+      "provider": "gemini",
+      "model": "gemini-2.5-pro",
       "enableToolUseShim": false,
       "quiet": true
     },
@@ -50,21 +123,9 @@
   {
     "name": "create-pod",
     "llmConfig": {
-      "id": "shim_disabled-gemini-gemini-2.5-pro-preview-03-25",
-      "provider": "gemini",
-      "model": "gemini-2.5-pro-preview-03-25",
-      "enableToolUseShim": false,
-      "quiet": true
-    },
-    "result": "success",
-    "error": ""
-  },
-  {
-    "name": "create-pod",
-    "llmConfig": {
-      "id": "shim_enabled-gemini-gemma-3-27b-it",
-      "provider": "gemini",
-      "model": "gemma-3-27b-it",
+      "id": "shim_enabled-openai-google/gemma-3-27b-it",
+      "provider": "openai",
+      "model": "google/gemma-3-27b-it",
       "enableToolUseShim": true,
       "quiet": true
     },
@@ -74,9 +135,9 @@
   {
     "name": "create-pod-mount-configmaps",
     "llmConfig": {
-      "id": "shim_disabled-gemini-gemini-2.5-flash-preview-04-17",
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
       "provider": "gemini",
-      "model": "gemini-2.5-flash-preview-04-17",
+      "model": "gemini-2.5-flash",
       "enableToolUseShim": false,
       "quiet": true
     },
@@ -86,9 +147,9 @@
   {
     "name": "create-pod-mount-configmaps",
     "llmConfig": {
-      "id": "shim_disabled-gemini-gemini-2.5-pro-preview-03-25",
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
       "provider": "gemini",
-      "model": "gemini-2.5-pro-preview-03-25",
+      "model": "gemini-2.5-pro",
       "enableToolUseShim": false,
       "quiet": true
     },
@@ -98,33 +159,26 @@
   {
     "name": "create-pod-mount-configmaps",
     "llmConfig": {
-      "id": "shim_enabled-gemini-gemma-3-27b-it",
-      "provider": "gemini",
-      "model": "gemma-3-27b-it",
+      "id": "shim_enabled-openai-google/gemma-3-27b-it",
+      "provider": "openai",
+      "model": "google/gemma-3-27b-it",
       "enableToolUseShim": true,
       "quiet": true
     },
-    "result": "success",
+    "result": "fail",
+    "failures": [
+      {
+        "message": "verifier script failed"
+      }
+    ],
     "error": ""
   },
   {
     "name": "create-pod-resources-limits",
     "llmConfig": {
-      "id": "shim_disabled-gemini-gemini-2.5-flash-preview-04-17",
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
       "provider": "gemini",
-      "model": "gemini-2.5-flash-preview-04-17",
-      "enableToolUseShim": false,
-      "quiet": true
-    },
-    "result": "success",
-    "error": ""
-  },
-  {
-    "name": "create-pod-resources-limits",
-    "llmConfig": {
-      "id": "shim_disabled-gemini-gemini-2.5-pro-preview-03-25",
-      "provider": "gemini",
-      "model": "gemini-2.5-pro-preview-03-25",
+      "model": "gemini-2.5-flash",
       "enableToolUseShim": false,
       "quiet": true
     },
@@ -134,9 +188,129 @@
   {
     "name": "create-pod-resources-limits",
     "llmConfig": {
-      "id": "shim_enabled-gemini-gemma-3-27b-it",
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
       "provider": "gemini",
-      "model": "gemma-3-27b-it",
+      "model": "gemini-2.5-pro",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "create-pod-resources-limits",
+    "llmConfig": {
+      "id": "shim_enabled-openai-google/gemma-3-27b-it",
+      "provider": "openai",
+      "model": "google/gemma-3-27b-it",
+      "enableToolUseShim": true,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "create-simple-rbac",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "create-simple-rbac",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
+      "provider": "gemini",
+      "model": "gemini-2.5-pro",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "create-simple-rbac",
+    "llmConfig": {
+      "id": "shim_enabled-openai-google/gemma-3-27b-it",
+      "provider": "openai",
+      "model": "google/gemma-3-27b-it",
+      "enableToolUseShim": true,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "debug-app-logs",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "debug-app-logs",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
+      "provider": "gemini",
+      "model": "gemini-2.5-pro",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "debug-app-logs",
+    "llmConfig": {
+      "id": "shim_enabled-openai-google/gemma-3-27b-it",
+      "provider": "openai",
+      "model": "google/gemma-3-27b-it",
+      "enableToolUseShim": true,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "deployment-traffic-switch",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "deployment-traffic-switch",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
+      "provider": "gemini",
+      "model": "gemini-2.5-pro",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "deployment-traffic-switch",
+    "llmConfig": {
+      "id": "shim_enabled-openai-google/gemma-3-27b-it",
+      "provider": "openai",
+      "model": "google/gemma-3-27b-it",
       "enableToolUseShim": true,
       "quiet": true
     },
@@ -146,9 +320,26 @@
   {
     "name": "fix-crashloop",
     "llmConfig": {
-      "id": "shim_disabled-gemini-gemini-2.5-flash-preview-04-17",
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
       "provider": "gemini",
-      "model": "gemini-2.5-flash-preview-04-17",
+      "model": "gemini-2.5-flash",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "fail",
+    "failures": [
+      {
+        "message": "verifier script failed"
+      }
+    ],
+    "error": ""
+  },
+  {
+    "name": "fix-crashloop",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
+      "provider": "gemini",
+      "model": "gemini-2.5-pro",
       "enableToolUseShim": false,
       "quiet": true
     },
@@ -158,21 +349,9 @@
   {
     "name": "fix-crashloop",
     "llmConfig": {
-      "id": "shim_disabled-gemini-gemini-2.5-pro-preview-03-25",
-      "provider": "gemini",
-      "model": "gemini-2.5-pro-preview-03-25",
-      "enableToolUseShim": false,
-      "quiet": true
-    },
-    "result": "success",
-    "error": ""
-  },
-  {
-    "name": "fix-crashloop",
-    "llmConfig": {
-      "id": "shim_enabled-gemini-gemma-3-27b-it",
-      "provider": "gemini",
-      "model": "gemma-3-27b-it",
+      "id": "shim_enabled-openai-google/gemma-3-27b-it",
+      "provider": "openai",
+      "model": "google/gemma-3-27b-it",
       "enableToolUseShim": true,
       "quiet": true
     },
@@ -182,9 +361,26 @@
   {
     "name": "fix-image-pull",
     "llmConfig": {
-      "id": "shim_disabled-gemini-gemini-2.5-flash-preview-04-17",
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
       "provider": "gemini",
-      "model": "gemini-2.5-flash-preview-04-17",
+      "model": "gemini-2.5-flash",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "fail",
+    "failures": [
+      {
+        "message": "verifier script failed"
+      }
+    ],
+    "error": ""
+  },
+  {
+    "name": "fix-image-pull",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
+      "provider": "gemini",
+      "model": "gemini-2.5-pro",
       "enableToolUseShim": false,
       "quiet": true
     },
@@ -194,9 +390,21 @@
   {
     "name": "fix-image-pull",
     "llmConfig": {
-      "id": "shim_disabled-gemini-gemini-2.5-pro-preview-03-25",
+      "id": "shim_enabled-openai-google/gemma-3-27b-it",
+      "provider": "openai",
+      "model": "google/gemma-3-27b-it",
+      "enableToolUseShim": true,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "fix-oomkilled",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
       "provider": "gemini",
-      "model": "gemini-2.5-pro-preview-03-25",
+      "model": "gemini-2.5-flash",
       "enableToolUseShim": false,
       "quiet": true
     },
@@ -204,11 +412,141 @@
     "error": ""
   },
   {
-    "name": "fix-image-pull",
+    "name": "fix-oomkilled",
     "llmConfig": {
-      "id": "shim_enabled-gemini-gemma-3-27b-it",
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
       "provider": "gemini",
-      "model": "gemma-3-27b-it",
+      "model": "gemini-2.5-pro",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "fix-oomkilled",
+    "llmConfig": {
+      "id": "shim_enabled-openai-google/gemma-3-27b-it",
+      "provider": "openai",
+      "model": "google/gemma-3-27b-it",
+      "enableToolUseShim": true,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "fix-pending-pod",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "fix-pending-pod",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
+      "provider": "gemini",
+      "model": "gemini-2.5-pro",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "fix-pending-pod",
+    "llmConfig": {
+      "id": "shim_enabled-openai-google/gemma-3-27b-it",
+      "provider": "openai",
+      "model": "google/gemma-3-27b-it",
+      "enableToolUseShim": true,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "fix-probes",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "fail",
+    "failures": [
+      {
+        "message": "verifier script failed"
+      }
+    ],
+    "error": ""
+  },
+  {
+    "name": "fix-probes",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
+      "provider": "gemini",
+      "model": "gemini-2.5-pro",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "fix-probes",
+    "llmConfig": {
+      "id": "shim_enabled-openai-google/gemma-3-27b-it",
+      "provider": "openai",
+      "model": "google/gemma-3-27b-it",
+      "enableToolUseShim": true,
+      "quiet": true
+    },
+    "result": "fail",
+    "failures": [
+      {
+        "message": "verifier script failed"
+      }
+    ],
+    "error": ""
+  },
+  {
+    "name": "fix-rbac-wrong-resource",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "fix-rbac-wrong-resource",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
+      "provider": "gemini",
+      "model": "gemini-2.5-pro",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "fix-rbac-wrong-resource",
+    "llmConfig": {
+      "id": "shim_enabled-openai-google/gemma-3-27b-it",
+      "provider": "openai",
+      "model": "google/gemma-3-27b-it",
       "enableToolUseShim": true,
       "quiet": true
     },
@@ -218,9 +556,9 @@
   {
     "name": "fix-service-routing",
     "llmConfig": {
-      "id": "shim_disabled-gemini-gemini-2.5-flash-preview-04-17",
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
       "provider": "gemini",
-      "model": "gemini-2.5-flash-preview-04-17",
+      "model": "gemini-2.5-flash",
       "enableToolUseShim": false,
       "quiet": true
     },
@@ -230,9 +568,9 @@
   {
     "name": "fix-service-routing",
     "llmConfig": {
-      "id": "shim_disabled-gemini-gemini-2.5-pro-preview-03-25",
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
       "provider": "gemini",
-      "model": "gemini-2.5-pro-preview-03-25",
+      "model": "gemini-2.5-pro",
       "enableToolUseShim": false,
       "quiet": true
     },
@@ -242,28 +580,108 @@
   {
     "name": "fix-service-routing",
     "llmConfig": {
-      "id": "shim_enabled-gemini-gemma-3-27b-it",
-      "provider": "gemini",
-      "model": "gemma-3-27b-it",
+      "id": "shim_enabled-openai-google/gemma-3-27b-it",
+      "provider": "openai",
+      "model": "google/gemma-3-27b-it",
       "enableToolUseShim": true,
       "quiet": true
     },
-    "result": "",
-    "error": "exit status 1"
+    "result": "fail",
+    "failures": [
+      {
+        "message": "verifier script failed"
+      }
+    ],
+    "error": ""
   },
   {
-    "name": "list-images-for-pods",
+    "name": "fix-service-with-no-endpoints",
     "llmConfig": {
-      "id": "shim_disabled-gemini-gemini-2.5-flash-preview-04-17",
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
       "provider": "gemini",
-      "model": "gemini-2.5-flash-preview-04-17",
+      "model": "gemini-2.5-flash",
       "enableToolUseShim": false,
       "quiet": true
     },
     "result": "success",
+    "error": ""
+  },
+  {
+    "name": "fix-service-with-no-endpoints",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
+      "provider": "gemini",
+      "model": "gemini-2.5-pro",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "fix-service-with-no-endpoints",
+    "llmConfig": {
+      "id": "shim_enabled-openai-google/gemma-3-27b-it",
+      "provider": "openai",
+      "model": "google/gemma-3-27b-it",
+      "enableToolUseShim": true,
+      "quiet": true
+    },
+    "result": "fail",
     "failures": [
       {
-        "message": "did not found ui.render event in trace"
+        "message": "verifier script failed"
+      }
+    ],
+    "error": ""
+  },
+  {
+    "name": "horizontal-pod-autoscaler",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "fail",
+    "failures": [
+      {
+        "message": "verifier script failed"
+      }
+    ],
+    "error": ""
+  },
+  {
+    "name": "horizontal-pod-autoscaler",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
+      "provider": "gemini",
+      "model": "gemini-2.5-pro",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "fail",
+    "failures": [
+      {
+        "message": "verifier script failed"
+      }
+    ],
+    "error": ""
+  },
+  {
+    "name": "horizontal-pod-autoscaler",
+    "llmConfig": {
+      "id": "shim_enabled-openai-google/gemma-3-27b-it",
+      "provider": "openai",
+      "model": "google/gemma-3-27b-it",
+      "enableToolUseShim": true,
+      "quiet": true
+    },
+    "result": "fail",
+    "failures": [
+      {
+        "message": "verifier script failed"
       }
     ],
     "error": ""
@@ -271,33 +689,168 @@
   {
     "name": "list-images-for-pods",
     "llmConfig": {
-      "id": "shim_disabled-gemini-gemini-2.5-pro-preview-03-25",
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
       "provider": "gemini",
-      "model": "gemini-2.5-pro-preview-03-25",
+      "model": "gemini-2.5-flash",
       "enableToolUseShim": false,
       "quiet": true
     },
     "result": "success",
-    "failures": [
-      {
-        "message": "did not found ui.render event in trace"
-      }
-    ],
     "error": ""
   },
   {
     "name": "list-images-for-pods",
     "llmConfig": {
-      "id": "shim_enabled-gemini-gemma-3-27b-it",
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
       "provider": "gemini",
-      "model": "gemma-3-27b-it",
+      "model": "gemini-2.5-pro",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "list-images-for-pods",
+    "llmConfig": {
+      "id": "shim_enabled-openai-google/gemma-3-27b-it",
+      "provider": "openai",
+      "model": "google/gemma-3-27b-it",
+      "enableToolUseShim": true,
+      "quiet": true
+    },
+    "result": "fail",
+    "failures": [
+      {
+        "message": "regex \"docker.io/bitnami/mysql:8.0.33-debian-11-r17\" did not match output \"\\x1b[0m\\n  The kubectl get pods command returned 'No resources found in default        \\n  namespace'. This confirms that there are currently no pods running in the   \\n  default namespace. Since the user did not specify a namespace, I will inform\\n  them that no pods are running in the default namespace. I should also       \\n  mention they can specify a namespace to check other namespaces.There are    \\n  currently no pods running in the default namespace. If you have pods running\\n  in a different namespace, please specify the namespace to check.            \\n\\n\""
+      }
+    ],
+    "error": ""
+  },
+  {
+    "name": "multi-container-pod-communication",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "multi-container-pod-communication",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
+      "provider": "gemini",
+      "model": "gemini-2.5-pro",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "multi-container-pod-communication",
+    "llmConfig": {
+      "id": "shim_enabled-openai-google/gemma-3-27b-it",
+      "provider": "openai",
+      "model": "google/gemma-3-27b-it",
       "enableToolUseShim": true,
       "quiet": true
     },
     "result": "success",
+    "error": ""
+  },
+  {
+    "name": "resize-pvc",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "fail",
     "failures": [
       {
-        "message": "did not found ui.render event in trace"
+        "message": "verifier script failed"
+      }
+    ],
+    "error": ""
+  },
+  {
+    "name": "resize-pvc",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
+      "provider": "gemini",
+      "model": "gemini-2.5-pro",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "resize-pvc",
+    "llmConfig": {
+      "id": "shim_enabled-openai-google/gemma-3-27b-it",
+      "provider": "openai",
+      "model": "google/gemma-3-27b-it",
+      "enableToolUseShim": true,
+      "quiet": true
+    },
+    "result": "fail",
+    "failures": [
+      {
+        "message": "verifier script failed"
+      }
+    ],
+    "error": ""
+  },
+  {
+    "name": "rolling-update-deployment",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "fail",
+    "failures": [
+      {
+        "message": "verifier script failed"
+      }
+    ],
+    "error": ""
+  },
+  {
+    "name": "rolling-update-deployment",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
+      "provider": "gemini",
+      "model": "gemini-2.5-pro",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "rolling-update-deployment",
+    "llmConfig": {
+      "id": "shim_enabled-openai-google/gemma-3-27b-it",
+      "provider": "openai",
+      "model": "google/gemma-3-27b-it",
+      "enableToolUseShim": true,
+      "quiet": true
+    },
+    "result": "fail",
+    "failures": [
+      {
+        "message": "verifier script failed"
       }
     ],
     "error": ""
@@ -305,9 +858,9 @@
   {
     "name": "scale-deployment",
     "llmConfig": {
-      "id": "shim_disabled-gemini-gemini-2.5-flash-preview-04-17",
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
       "provider": "gemini",
-      "model": "gemini-2.5-flash-preview-04-17",
+      "model": "gemini-2.5-flash",
       "enableToolUseShim": false,
       "quiet": true
     },
@@ -317,9 +870,9 @@
   {
     "name": "scale-deployment",
     "llmConfig": {
-      "id": "shim_disabled-gemini-gemini-2.5-pro-preview-03-25",
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
       "provider": "gemini",
-      "model": "gemini-2.5-pro-preview-03-25",
+      "model": "gemini-2.5-pro",
       "enableToolUseShim": false,
       "quiet": true
     },
@@ -329,9 +882,9 @@
   {
     "name": "scale-deployment",
     "llmConfig": {
-      "id": "shim_enabled-gemini-gemma-3-27b-it",
-      "provider": "gemini",
-      "model": "gemma-3-27b-it",
+      "id": "shim_enabled-openai-google/gemma-3-27b-it",
+      "provider": "openai",
+      "model": "google/gemma-3-27b-it",
       "enableToolUseShim": true,
       "quiet": true
     },
@@ -341,9 +894,9 @@
   {
     "name": "scale-down-deployment",
     "llmConfig": {
-      "id": "shim_disabled-gemini-gemini-2.5-flash-preview-04-17",
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
       "provider": "gemini",
-      "model": "gemini-2.5-flash-preview-04-17",
+      "model": "gemini-2.5-flash",
       "enableToolUseShim": false,
       "quiet": true
     },
@@ -353,9 +906,9 @@
   {
     "name": "scale-down-deployment",
     "llmConfig": {
-      "id": "shim_disabled-gemini-gemini-2.5-pro-preview-03-25",
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
       "provider": "gemini",
-      "model": "gemini-2.5-pro-preview-03-25",
+      "model": "gemini-2.5-pro",
       "enableToolUseShim": false,
       "quiet": true
     },
@@ -365,13 +918,100 @@
   {
     "name": "scale-down-deployment",
     "llmConfig": {
-      "id": "shim_enabled-gemini-gemma-3-27b-it",
-      "provider": "gemini",
-      "model": "gemma-3-27b-it",
+      "id": "shim_enabled-openai-google/gemma-3-27b-it",
+      "provider": "openai",
+      "model": "google/gemma-3-27b-it",
       "enableToolUseShim": true,
       "quiet": true
     },
     "result": "success",
+    "error": ""
+  },
+  {
+    "name": "setup-dev-cluster",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "setup-dev-cluster",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
+      "provider": "gemini",
+      "model": "gemini-2.5-pro",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "setup-dev-cluster",
+    "llmConfig": {
+      "id": "shim_enabled-openai-google/gemma-3-27b-it",
+      "provider": "openai",
+      "model": "google/gemma-3-27b-it",
+      "enableToolUseShim": true,
+      "quiet": true
+    },
+    "result": "fail",
+    "failures": [
+      {
+        "message": "verifier script failed"
+      }
+    ],
+    "error": ""
+  },
+  {
+    "name": "statefulset-lifecycle",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "fail",
+    "failures": [
+      {
+        "message": "verifier script failed"
+      }
+    ],
+    "error": ""
+  },
+  {
+    "name": "statefulset-lifecycle",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
+      "provider": "gemini",
+      "model": "gemini-2.5-pro",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "statefulset-lifecycle",
+    "llmConfig": {
+      "id": "shim_enabled-openai-google/gemma-3-27b-it",
+      "provider": "openai",
+      "model": "google/gemma-3-27b-it",
+      "enableToolUseShim": true,
+      "quiet": true
+    },
+    "result": "fail",
+    "failures": [
+      {
+        "message": "verifier script failed"
+      }
+    ],
     "error": ""
   }
 ]
