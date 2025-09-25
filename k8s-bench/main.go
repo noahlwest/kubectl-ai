@@ -179,6 +179,7 @@ func run(ctx context.Context) error {
 }
 
 func runEvals(ctx context.Context) error {
+	start := time.Now()
 	config := EvalConfig{
 		TasksDir: "./tasks",
 	}
@@ -268,6 +269,7 @@ func runEvals(ctx context.Context) error {
 		return fmt.Errorf("running evaluation: %w", err)
 	}
 
+	fmt.Printf("Total evaluation time: %s\n", time.Since(start))
 	return nil
 }
 
