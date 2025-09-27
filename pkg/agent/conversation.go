@@ -471,6 +471,8 @@ func (c *Agent) Run(ctx context.Context, initialQuery string) error {
 					continue
 				}
 
+				// Copy sent chat content in case we need to retry
+				sentChatContent := c.currChatContent
 				// Clear our "response" now that we sent the last response
 				c.currChatContent = nil
 
@@ -547,14 +549,11 @@ func (c *Agent) Run(ctx context.Context, initialQuery string) error {
 				if streamedText != "" {
 					c.addMessage(api.MessageSourceModel, api.MessageTypeText, streamedText)
 				}
-				// If no function calls to be made, we're done
-				if len(functionCalls) == 0 {
-					log.Info("No function calls to be made, so most likely the task is completed, so we're done.")
-					c.setAgentState(api.AgentStateDone)
-					c.currChatContent = []any{}
-					c.currIteration = 0
-					c.pendingFunctionCalls = []ToolCallAnalysis{}
-					log.Info("Agent task completed, transitioning to done state")
+				// If no function calls to be made and no text response, retry
+				if len(functionCalls) == 0 && streamedText == "" {
+					log.Info("Empty response from LLM, re-trying.")
+					c.currChatContent = sentChatContent // Restore the content
+					c.currIteration = c.currIteration + 1 // Increment the iteration to make sure we don't infinite loop
 					continue
 				}
 
