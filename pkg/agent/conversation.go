@@ -552,7 +552,7 @@ func (c *Agent) Run(ctx context.Context, initialQuery string) error {
 				// If no function calls to be made and no text response, retry
 				if len(functionCalls) == 0 && streamedText == "" {
 					log.Info("Empty response from LLM, re-trying.")
-					c.currChatContent = sentChatContent // Restore the content
+					c.currChatContent = sentChatContent   // Restore the content
 					c.currIteration = c.currIteration + 1 // Increment the iteration to make sure we don't infinite loop
 					continue
 				}
