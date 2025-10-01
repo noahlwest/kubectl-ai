@@ -94,12 +94,13 @@ type Expectation struct {
 }
 
 type EvalConfig struct {
-	LLMConfigs  []model.LLMConfig
-	KubeConfig  string
-	TasksDir    string
-	TaskPattern string
-	AgentBin    string
-	Concurrency int
+	LLMConfigs        []model.LLMConfig
+	KubeConfig        string
+	TasksDir          string
+	TaskPattern       string
+	AgentBin          string
+	Concurrency       int
+	CreateKindCluster bool
 
 	OutputDir string
 }
@@ -207,6 +208,7 @@ func runEvals(ctx context.Context) error {
 	flag.BoolVar(&enableToolUseShim, "enable-tool-use-shim", enableToolUseShim, "Enable tool use shim")
 	flag.BoolVar(&quiet, "quiet", quiet, "Quiet mode (non-interactive mode)")
 	flag.IntVar(&config.Concurrency, "concurrency", 0, "Number of tasks to run concurrently (0 = auto, 1 = sequential)")
+	flag.BoolVar(&config.CreateKindCluster, "create-kind-cluster", false, "Create a temporary kind cluster for the evaluation run")
 	flag.StringVar(&config.OutputDir, "output-dir", config.OutputDir, "Directory to write results to")
 	flag.Parse()
 
