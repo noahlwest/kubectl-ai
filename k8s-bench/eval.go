@@ -26,7 +26,6 @@ import (
 	"regexp"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/GoogleCloudPlatform/kubectl-ai/k8s-bench/pkg/model"
 	"k8s.io/klog/v2"
@@ -34,17 +33,18 @@ import (
 )
 
 func runEvaluation(ctx context.Context, config EvalConfig) error {
+	logger := klog.FromContext(ctx)
 	if config.CreateKindCluster {
-		clusterName := fmt.Sprintf("k8s-bench-eval-%d", time.Now().Unix())
-		fmt.Printf("Creating kind cluster %q for evaluation run\n", clusterName)
+		clusterName := "k8s-bench-eval"
+		logger.Info("Creating kind cluster for evaluation run", "name", clusterName)
 
 		// Defer cluster deletion
 		defer func() {
-			fmt.Printf("Deleting kind cluster %q\n", clusterName)
+			logger.Info("Deleting kind cluster", "name", clusterName)
 			deleteCmd := exec.Command("kind", "delete", "cluster", "--name", clusterName)
 			// Use a new context for cleanup, as the original might have been cancelled
 			if err := deleteCmd.Run(); err != nil {
-				fmt.Printf("Warning: failed to delete kind cluster %q: %v\n", clusterName, err)
+				logger.Error(err, "failed to delete kind cluster", "name", clusterName)
 			}
 		}()
 
@@ -54,7 +54,7 @@ func runEvaluation(ctx context.Context, config EvalConfig) error {
 
 		// Create cluster
 		createCmd := exec.Command("kind", "create", "cluster", "--name", clusterName, "--wait", "5m")
-		fmt.Printf("\nRunning command: %s\n", strings.Join(createCmd.Args, " "))
+		logger.Info("Creating kind cluster", "name", clusterName)
 		createCmd.Stdout = os.Stdout
 		createCmd.Stderr = os.Stderr
 		if err := createCmd.Run(); err != nil {
@@ -62,7 +62,7 @@ func runEvaluation(ctx context.Context, config EvalConfig) error {
 		}
 
 		// Get kubeconfig
-		fmt.Printf("\nRunning command: kind get kubeconfig --name %s\n", clusterName)
+		logger.Info("Getting kubeconfig for kind cluster", "name", clusterName)
 		kubeconfigBytes, err := exec.Command("kind", "get", "kubeconfig", "--name", clusterName).Output()
 		if err != nil {
 			return fmt.Errorf("failed to get kubeconfig for kind cluster: %w", err)
@@ -80,6 +80,7 @@ func runEvaluation(ctx context.Context, config EvalConfig) error {
 		}
 		kubeconfigFile.Close()
 
+		logger.Info("Wrote Kubeconfig to", "path", kubeconfigFile)
 		config.KubeConfig = kubeconfigFile.Name()
 	}
 
