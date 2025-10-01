@@ -26,6 +26,7 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/GoogleCloudPlatform/kubectl-ai/k8s-bench/pkg/model"
 	"k8s.io/klog/v2"
@@ -33,6 +34,55 @@ import (
 )
 
 func runEvaluation(ctx context.Context, config EvalConfig) error {
+	if config.CreateKindCluster {
+		clusterName := fmt.Sprintf("k8s-bench-eval-%d", time.Now().Unix())
+		fmt.Printf("Creating kind cluster %q for evaluation run\n", clusterName)
+
+		// Defer cluster deletion
+		defer func() {
+			fmt.Printf("Deleting kind cluster %q\n", clusterName)
+			deleteCmd := exec.Command("kind", "delete", "cluster", "--name", clusterName)
+			// Use a new context for cleanup, as the original might have been cancelled
+			if err := deleteCmd.Run(); err != nil {
+				fmt.Printf("Warning: failed to delete kind cluster %q: %v\n", clusterName, err)
+			}
+		}()
+
+		// Delete if it exists, ignore error
+		deleteCmd := exec.Command("kind", "delete", "cluster", "--name", clusterName)
+		_ = deleteCmd.Run() // We don't care if this fails (e.g. cluster doesn't exist)
+
+		// Create cluster
+		createCmd := exec.Command("kind", "create", "cluster", "--name", clusterName, "--wait", "5m")
+		fmt.Printf("\nRunning command: %s\n", strings.Join(createCmd.Args, " "))
+		createCmd.Stdout = os.Stdout
+		createCmd.Stderr = os.Stderr
+		if err := createCmd.Run(); err != nil {
+			return fmt.Errorf("failed to create kind cluster: %w", err)
+		}
+
+		// Get kubeconfig
+		fmt.Printf("\nRunning command: kind get kubeconfig --name %s\n", clusterName)
+		kubeconfigBytes, err := exec.Command("kind", "get", "kubeconfig", "--name", clusterName).Output()
+		if err != nil {
+			return fmt.Errorf("failed to get kubeconfig for kind cluster: %w", err)
+		}
+
+		// Write kubeconfig to a temp file
+		kubeconfigFile, err := os.CreateTemp("", "kubeconfig-*.yaml")
+		if err != nil {
+			return fmt.Errorf("failed to create temp file for kubeconfig: %w", err)
+		}
+		defer os.Remove(kubeconfigFile.Name()) // Clean up the temp file
+
+		if _, err := kubeconfigFile.Write(kubeconfigBytes); err != nil {
+			return fmt.Errorf("failed to write kubeconfig to temp file: %w", err)
+		}
+		kubeconfigFile.Close()
+
+		config.KubeConfig = kubeconfigFile.Name()
+	}
+
 	if config.OutputDir == "" {
 		return fmt.Errorf("must set OutputDir")
 	}
