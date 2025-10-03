@@ -102,9 +102,30 @@ func (jrt *journalingRoundTripper) RoundTrip(req *http.Request) (*http.Response,
 	return resp, nil
 }
 
-// processStream parses a Server-Sent Events (SSE) stream and returns a structured summary.
+// processStream parses an event stream and returns a structured summary.
 // It aggregates fragmented text and reassembles complete tool calls.
 func processStream(body []byte) map[string]any {
+	// A simple way to guess the provider based on JSON keys.
+	bodyStr := string(body)
+	var summary map[string]any
+
+	// TODO: Not sure if this is the best way to decide which parser to use
+	if strings.Contains(bodyStr, `"delta":{"content"`) {
+		// Looks like an OpenAI-compatible stream
+		summary = parseOpenAIStream(body)
+	} else if strings.Contains(bodyStr, `"candidates"`) {
+		// This might be a Gemini stream
+		summary = parseGeminiStream(body)
+	} else {
+		// Fallback for unknown stream types
+		summary = map[string]any{"raw_stream": bodyStr}
+	}
+	return summary
+}
+
+// parseOpenAIStream parses an OpenAI provider stream and returns a structured summary.
+// It aggregates fragmented text and reassembles complete tool calls.
+func parseOpenAIStream(body []byte) map[string]any {
 	var aggregatedText strings.Builder
 	// A map to hold the in-progress tool calls, keyed by their index.
 	toolCallBuilders := make(map[int]map[string]any)
@@ -184,6 +205,66 @@ func processStream(body []byte) map[string]any {
 			}
 		}
 		significantEvents = append(significantEvents, map[string]any{"tool_calls": []any{builder}})
+	}
+
+	return map[string]any{
+		"aggregated_text":    aggregatedText.String(),
+		"significant_events": significantEvents,
+	}
+}
+
+// A parser specifically for Gemini's stream structure.
+func parseGeminiStream(body []byte) map[string]any {
+	var aggregatedText strings.Builder
+	var significantEvents []map[string]any
+
+	scanner := bufio.NewScanner(bytes.NewReader(body))
+	for scanner.Scan() {
+		line := scanner.Text()
+		if !strings.HasPrefix(line, "data:") {
+			continue
+		}
+		jsonData := strings.TrimSpace(strings.TrimPrefix(line, "data:"))
+
+		var chunk map[string]any
+		if err := json.Unmarshal([]byte(jsonData), &chunk); err != nil {
+			continue
+		}
+
+		// Navigate the Gemini JSON structure: candidates -> content -> parts -> text
+		candidates, ok := chunk["candidates"].([]any)
+		if !ok || len(candidates) == 0 {
+			continue
+		}
+		candidate, ok := candidates[0].(map[string]any)
+		if !ok {
+			continue
+		}
+		content, ok := candidate["content"].(map[string]any)
+		if !ok {
+			continue
+		}
+		parts, ok := content["parts"].([]any)
+		if !ok || len(parts) == 0 {
+			continue
+		}
+
+		// Process each "part" in the content
+		for _, partInterface := range parts {
+			part, ok := partInterface.(map[string]any)
+			if !ok {
+				continue
+			}
+
+			// Check for and aggregate text content
+			if text, ok := part["text"].(string); ok {
+				aggregatedText.WriteString(text)
+			}
+
+			if functionCall, ok := part["functionCall"].(map[string]any); ok {
+				significantEvents = append(significantEvents, map[string]any{"functionCall": functionCall})
+			}
+		}
 	}
 
 	return map[string]any{
