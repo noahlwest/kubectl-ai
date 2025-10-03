@@ -69,8 +69,8 @@ func NewGeminiAPIClient(ctx context.Context, opt GeminiAPIClientOptions) (*Googl
 	httpClient := createCustomHTTPClient(skipVerifySSL)
 	httpClient = withJournaling(httpClient)
 	cc := &genai.ClientConfig{
-		APIKey:  apiKey,
-		Backend: genai.BackendGeminiAPI,
+		APIKey:     apiKey,
+		Backend:    genai.BackendGeminiAPI,
 		HTTPClient: httpClient,
 	}
 
