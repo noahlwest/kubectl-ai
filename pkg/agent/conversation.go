@@ -220,6 +220,8 @@ func (s *Agent) Init(ctx context.Context) error {
 	systemPrompt, err := s.generatePrompt(ctx, defaultSystemPromptTemplate, PromptData{
 		Tools:             s.Tools,
 		EnableToolUseShim: s.EnableToolUseShim,
+		// RunOnce is a good proxy to indicate the agentic session is non-interactive mode.
+		SessionIsInteractive: !s.RunOnce,
 	})
 	if err != nil {
 		return fmt.Errorf("generating system prompt: %w", err)
@@ -1029,7 +1031,8 @@ type PromptData struct {
 	Query string
 	Tools tools.Tools
 
-	EnableToolUseShim bool
+	EnableToolUseShim    bool
+	SessionIsInteractive bool
 }
 
 func (a *PromptData) ToolsAsJSON() string {
