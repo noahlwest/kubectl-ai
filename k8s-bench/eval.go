@@ -26,6 +26,7 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/GoogleCloudPlatform/kubectl-ai/k8s-bench/pkg/model"
 	"k8s.io/klog/v2"
@@ -267,6 +268,20 @@ func evaluateTask(ctx context.Context, config EvalConfig, taskID string, task Ta
 		LLMConfig: llmConfig,
 	}
 
+	timeout := 5 * time.Minute
+	if task.Timeout != "" {
+		var err error
+		timeout, err = time.ParseDuration(task.Timeout)
+		if err != nil {
+			result.Result = "fail"
+			result.Error = fmt.Sprintf("parsing timeout: %v", err)
+			return result
+		}
+	}
+
+	taskCtx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
 	taskOutputDir := filepath.Join(config.OutputDir, taskID, llmConfig.ID)
 
 	var logBuffer bytes.Buffer
@@ -297,20 +312,25 @@ func evaluateTask(ctx context.Context, config EvalConfig, taskID string, task Ta
 	x.taskDir = taskDir
 
 	defer func() {
-		if err := x.runCleanup(ctx); err != nil {
+		if err := x.runCleanup(context.Background()); err != nil {
 			fmt.Printf("Warning: cleanup failed for task %s: %v\n", taskID, err)
 		}
 	}()
 
-	if err := x.runSetup(ctx); err != nil {
+	if err := x.runSetup(taskCtx); err != nil {
 		// Unexpected error
 		result.Error = err.Error()
 		return result
 	}
 
 	// Run the agent
-	agentOutput, err := x.runAgent(ctx)
+	agentOutput, err := x.runAgent(taskCtx)
 	if err != nil {
+		if taskCtx.Err() == context.DeadlineExceeded {
+			result.Result = "fail"
+			result.AddFailure("task timed out after %v", timeout)
+			return result
+		}
 		// Unexpected error
 		result.Error = err.Error()
 		return result
@@ -360,7 +380,7 @@ func evaluateTask(ctx context.Context, config EvalConfig, taskID string, task Ta
 	// Run verifier if specified
 	if task.Verifier != "" {
 		verifierPath := filepath.Join(taskDir, task.Verifier)
-		cmd := exec.CommandContext(ctx, verifierPath)
+		cmd := exec.CommandContext(taskCtx, verifierPath)
 		cmd.Env = append(os.Environ(), fmt.Sprintf("KUBECONFIG=%s", x.kubeConfig))
 		fmt.Printf("\nRunning verifier for task %s\n", taskID)
 
