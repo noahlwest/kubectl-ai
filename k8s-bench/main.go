@@ -35,6 +35,7 @@ type Task struct {
 	Cleanup    string `json:"cleanup,omitempty"`
 	Difficulty string `json:"difficulty"`
 	Disabled   bool   `json:"disabled,omitempty"`
+	Timeout    string `json:"timeout,omitempty"`
 
 	Expect []Expectation `json:"expect,omitempty"`
 
