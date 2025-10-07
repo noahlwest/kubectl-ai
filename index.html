@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>K8s Benchmark Results</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 2rem;
+            background-color: #f6f8fa;
+            color: #24292e;
+        }
+        h1, h2 {
+            text-align: center;
+            font-weight: 600;
+            border-bottom: 1px solid #e1e4e8;
+            padding-bottom: 0.5em;
+            margin-top: 2em;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px auto;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            background-color: #fff;
+        }
+        #summary-container table {
+            max-width: 800px;
+        }
+        th, td {
+            border: 1px solid #dfe2e5;
+            padding: 12px 15px;
+            text-align: left;
+            vertical-align: middle;
+        }
+        th {
+            background-color: #f6f8fa;
+            font-weight: 600;
+        }
+        tr:nth-child(even) {
+            background-color: #f6f8fa;
+        }
+        .result {
+            font-weight: bold;
+            text-transform: capitalize;
+            padding: 5px 10px;
+            border-radius: 5px;
+            color: white;
+            text-align: center;
+        }
+        .success {
+            background-color: #28a745;
+        }
+        .fail {
+            background-color: #d73a49;
+        }
+        .failure-message {
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            background-color: #f3f3f3;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 0.85em;
+            margin-bottom: 10px; /* Space between message and link */
+        }
+        .score-percentage-text {
+            text-align: right;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-size: 0.9em;
+            color: #334155;
+        }
+        .score-percentage-text .total {
+            color: #64748b;
+        }
+        .score-bar-container {
+            width: 100%;
+            background-color: #e2e8f0;
+            height: 8px;
+            display: flex;
+        }
+        .bar-segment {
+            height: 8px;
+        }
+
+        .sortable-header {
+            cursor: pointer;
+            position: relative;
+        }
+        .sortable-header:hover {
+            background-color: #f0f2f4;
+        }
+        .sortable-header::after {
+            content: '';
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            margin-top: -8px;
+            border: 4px solid transparent;
+            opacity: 0.3;
+        }
+        .sortable-header.asc::after {
+            opacity: 1;
+            border-bottom-color: #24292e;
+        }
+        .sortable-header.desc::after {
+            opacity: 1;
+            border-top-color: #24292e;
+        }
+
+        /* --- New CSS for the log link --- */
+        .log-link {
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>Kubernetes Benchmark Leaderboard</h1>
+    
+    <div id="summary-container">
+        <p>Loading summary...</p>
+    </div>
+    
+    <h2>Detailed Results</h2>
+    <div id="details-container">
+        <p>Loading details...</p>
+    </div>
+
+    <script>
+        /**
+         * Calculates a color hue on a scale from red (0) to green (120)
+         * based on a percentage value (0-100).
+         */
+        function getHueForPercentage(percentage) {
+            return (percentage / 100) * 120;
+        }
+
+        /**
+         * Sorts the detailed results table by a given column index.
+         */
+        function sortTableByColumn(table, columnIndex) {
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            const header = table.querySelector(`th[data-column-index='${columnIndex}']`);
+            const currentIsAsc = header.classList.contains('asc');
+            const direction = currentIsAsc ? 'desc' : 'asc';
+            
+            rows.sort((a, b) => {
+                const aText = a.querySelector(`td:nth-child(${columnIndex + 1})`).innerText.trim();
+                const bText = b.querySelector(`td:nth-child(${columnIndex + 1})`).innerText.trim();
+                return aText.localeCompare(bText, undefined, { numeric: true }) * (direction === 'asc' ? 1 : -1);
+            });
+            
+            tbody.innerHTML = '';
+            tbody.append(...rows);
+
+            table.querySelectorAll('.sortable-header').forEach(th => th.classList.remove('asc', 'desc'));
+            header.classList.add(direction);
+        }
+        
+        async function displayBenchmarkResults() {
+            const summaryContainer = document.getElementById('summary-container');
+            const detailsContainer = document.getElementById('details-container');
+            
+            try {
+                const response = await fetch('./k8s-bench/.build/k8s-bench-Qwen/Qwen3-Next-80B-A3B-Instruct/k8s-bench.json');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+
+                // 1. PROCESS DATA & BUILD SUMMARY TABLE
+                // This part is unchanged
+                const modelScores = {}; 
+                data.forEach(item => {
+                    const modelName = item.llmConfig.model;
+                    if (!modelScores[modelName]) {
+                        modelScores[modelName] = { successes: 0, total: 0 };
+                    }
+                    modelScores[modelName].total++;
+                    if (item.result === 'success') {
+                        modelScores[modelName].successes++;
+                    }
+                });
+
+                const summaryData = Object.entries(modelScores).map(([model, scores]) => ({ model, ...scores }));
+                summaryData.sort((a, b) => (b.successes / b.total) - (a.successes / a.total));
+                
+                let summaryTableHTML = `
+                    <table>
+                        <thead><tr><th>Model</th><th style="width: 50%;">Score</th></tr></thead>
+                        <tbody>`;
+                summaryData.forEach(summary => {
+                    const percentage = (summary.successes / summary.total * 100);
+                    const unfilledPercentage = 100 - percentage;
+                    const hue = getHueForPercentage(percentage);
+                    summaryTableHTML += `
+                        <tr>
+                            <td>${summary.model}</td>
+                            <td>
+                                <div>
+                                    <div class="score-percentage-text">${percentage.toFixed(0)}% <span class="total"> / ${summary.total} tasks</span></div>
+                                    <div class="score-bar-container">
+                                        <div class="bar-segment" style="width: ${percentage}%; background-color: hsla(${hue}, 85%, 40%, 0.9);"></div>
+                                        <div class="bar-segment" style="width: ${unfilledPercentage}%; background-color: transparent; border: 2px solid hsla(${hue}, 85%, 45%, 0.8); border-left-width: 0px; box-sizing: border-box;"></div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>`;
+                });
+                summaryContainer.innerHTML = summaryTableHTML + `</tbody></table>`;
+                
+                // 2. PRE-SORT THE DETAILED DATA
+                data.sort((a, b) => {
+                    const modelCompare = a.llmConfig.model.localeCompare(b.llmConfig.model);
+                    if (modelCompare !== 0) return modelCompare;
+                    return a.name.localeCompare(b.name);
+                });
+
+                // 3. BUILD THE DETAILED RESULTS TABLE (Updated for log links)
+                let detailsTableHTML = `
+                    <table id="details-table">
+                        <thead>
+                            <tr>
+                                <th class="sortable-header" data-column-index="0">Task Name</th>
+                                <th class="sortable-header" data-column-index="1">Model</th>
+                                <th class="sortable-header" data-column-index="2">Result</th>
+                                <th>Failure Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+
+                data.forEach(item => {
+                    const resultClass = item.result === 'success' ? 'success' : 'fail';
+                    
+                    let failureCellContent = 'N/A';
+                    if (item.result === 'fail') {
+                        const message = item.failures && item.failures.length > 0 ? item.failures[0].message.trim() : 'No failure message provided.';
+                        const logPath = `./k8s-bench/.build/k8s-bench-${item.llmConfig.model}/${item.name}/log.txt`;
+                        
+                        failureCellContent = `
+                            <pre class="failure-message">${message}</pre>
+                            <a href="${logPath}" class="log-link" target="_blank" rel="noopener noreferrer">View Full Log</a>
+                        `;
+                    }
+                    
+                    detailsTableHTML += `
+                        <tr>
+                            <td>${item.name}</td>
+                            <td>${item.llmConfig.model}</td>
+                            <td><span class="result ${resultClass}">${item.result}</span></td>
+                            <td>${failureCellContent}</td>
+                        </tr>`;
+                });
+                detailsContainer.innerHTML = detailsTableHTML + `</tbody></table>`;
+
+                // 4. ATTACH SORT EVENT LISTENERS
+                const detailsTable = document.getElementById('details-table');
+                detailsTable.querySelectorAll('.sortable-header').forEach(header => {
+                    header.addEventListener('click', () => {
+                        const columnIndex = parseInt(header.dataset.columnIndex, 10);
+                        sortTableByColumn(detailsTable, columnIndex);
+                    });
+                });
+
+            } catch (error) {
+                summaryContainer.innerHTML = `<p style="color: red;">Failed to load benchmark data: ${error.message}</p>`;
+                detailsContainer.innerHTML = '';
+                console.error('Error fetching or parsing JSON:', error);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', displayBenchmarkResults);
+    </script>
+
+</body>
+</html>
