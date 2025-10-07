@@ -226,6 +226,7 @@ func (s *Agent) Init(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("generating system prompt: %w", err)
 	}
+
 	// Start a new chat session
 	s.llmChat = gollm.NewRetryChat(
 		s.LLM.StartChat(systemPrompt, s.Model),
@@ -289,6 +290,10 @@ func (c *Agent) Close() error {
 
 func (c *Agent) Run(ctx context.Context, initialQuery string) error {
 	log := klog.FromContext(ctx)
+
+	if c.Recorder != nil {
+		ctx = journal.ContextWithRecorder(ctx, c.Recorder)
+	}
 
 	log.Info("Starting agent loop", "initialQuery", initialQuery, "runOnce", c.RunOnce)
 	go func() {
@@ -464,15 +469,6 @@ func (c *Agent) Run(ctx context.Context, initialQuery string) error {
 				}
 
 				// we run the agentic loop for one iteration
-				if c.Recorder != nil {
-					event := &journal.Event{
-						Action:  "llm.request",
-						Payload: c.currChatContent,
-					}
-					if err := c.Recorder.Write(ctx, event); err != nil {
-						klog.Warningf("failed to write to trace: %v", err)
-					}
-				}
 				stream, err := c.llmChat.SendStreaming(ctx, c.currChatContent...)
 				if err != nil {
 					log.Error(err, "error sending streaming LLM response")
@@ -518,15 +514,6 @@ func (c *Agent) Run(ctx context.Context, initialQuery string) error {
 					if response == nil {
 						// end of streaming response
 						break
-					}
-					if c.Recorder != nil {
-						event := &journal.Event{
-							Action:  "llm.response",
-							Payload: response,
-						}
-						if err := c.Recorder.Write(ctx, event); err != nil {
-							klog.Warningf("failed to write to trace: %v", err)
-						}
 					}
 					// klog.Infof("response: %+v", response)
 
