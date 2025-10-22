@@ -328,7 +328,25 @@ func evaluateTask(ctx context.Context, config EvalConfig, taskID string, task Ta
 			return result
 		}
 		// Unexpected error
-		result.Error = err.Error()
+		result.Result = "error"
+		const maxErrLogLines = 3
+		logString := logBuffer.String()
+		logTail, truncated := getLastNLines(logString, maxErrLogLines)
+		// build log file path
+		shimSegment := "shim_disabled"
+		if x.llmConfig.EnableToolUseShim {
+			shimSegment = "shim_enabled"
+		}
+		logPath := filepath.Join(
+			config.OutputDir,
+			taskID,
+			shimSegment+"-"+x.llmConfig.ProviderID+"-"+x.llmConfig.ModelID,
+		)
+		errorMessage := fmt.Sprintf("agent encountered error: %v\n---LOG---\n%s", err, logTail)
+		if truncated {
+			errorMessage += fmt.Sprintf("\n... (log truncated, full log at %s)", logPath)
+		}
+		result.Error = errorMessage
 		return result
 	}
 
