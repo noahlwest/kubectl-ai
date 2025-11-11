@@ -4,8 +4,8 @@ set -eou pipefail
 
 # Example usage: ./run-eval-loop.sh --iterations 5 --provider gemini --model gemini-2.5-pro --api-base http://localhost:8000/v1 --concurrency 5 --task-pattern "create" -k AlwaysCreate
 
-# Number of times to run the loop (default: 3)
-ITERATIONS=3
+# Number of times to run the loop (default: 1)
+ITERATIONS=1
 # The LLM provider to use (default: gemini)
 PROVIDER="gemini"
 # The specific model to test (default: "gemini-2.5-pro")
@@ -13,7 +13,7 @@ MODEL="gemini-2.5-pro"
 # The API base URL (default: "http://localhost:8000/v1")
 API_BASE="http://localhost:8000/v1"
 # The number of eval tasks to run in parallel (default: 5)
-CONCURRENCY=1
+CONCURRENCY=5
 # The regex pattern for tasks to run
 TASK_PATTERN=""
 # kind cluster creation policy (default: "CreateIfNotExists")
@@ -61,7 +61,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Check for required commands
-for cmd in git go make; do
+for cmd in git go; do
   if ! command -v $cmd &> /dev/null; then
     echo "Error: Required command '$cmd' is not installed. Aborting." >&2
     exit 1
@@ -97,38 +97,29 @@ echo "Task Pattern: ${TASK_PATTERN:-"All Tasks"}"
 # Loop from 1 to the specified number of iterations
 for i in $(seq 1 $ITERATIONS)
 do
-  # Create the unique directory name for this run
   OUTPUT_DIR="${REPO_ROOT}/.build/k8s-bench-${MODEL}-${i}"
   
-  echo "**********"
-  echo "loop_evals: Running iteration $i of $ITERATIONS..."
-  echo "writing results to $OUTPUT_DIR"
-  echo "**********"
+  echo "Running iteration $i of $ITERATIONS..."
 
-  # Construct the arguments for the make command
-  TEST_ARGS="--enable-tool-use-shim=false --llm-provider=${PROVIDER} --models=${MODEL} --quiet --output-dir=${OUTPUT_DIR} --cluster-creation-policy=${CLUSTER_CREATION_POLICY} --concurrency ${CONCURRENCY} "
+  K8S_BENCH_ARGS="--agent-bin ${BINDIR}/kubectl-ai --kubeconfig ${KUBECONFIG:-~/.kube/config} --enable-tool-use-shim=false --llm-provider=${PROVIDER} --models=${MODEL} --quiet --output-dir=${OUTPUT_DIR} --cluster-creation-policy=${CLUSTER_CREATION_POLICY} --concurrency ${CONCURRENCY} --tasks-dir=${REPO_ROOT}/k8s-bench/tasks "
 
-  # Add task pattern if it was supplied
   if [ -n "$TASK_PATTERN" ]; then
     TEST_ARGS+="--task-pattern=${TASK_PATTERN} "
     echo "Applying task pattern: ${TASK_PATTERN}"
   fi
 
-  # Execute the make command and capture the evaluation time line
+  # Execute the k8s-bench command and capture the evaluation time line
   run_time_line=$( \
     OPENAI_API_KEY="not needed" \
     OPENAI_API_BASE="$API_BASE" \
-    TEST_ARGS="$TEST_ARGS" \
-    make run-evals | tee /dev/tty | grep '^Total evaluation time:' \
+    "${K8S_BENCH_BIN}" run ${K8S_BENCH_ARGS} | tee /dev/tty | grep '^Total evaluation time:' \
   )
 
-  # Check for errors in the make command
   if [ ${PIPESTATUS[0]} -ne 0 ]; then
-    echo "Error on iteration $i during 'make run-evals'. Aborting loop."
+    echo "Error on iteration $i during 'k8s-bench run'. Aborting loop."
     exit 1
   fi
 
-  echo "---"
   echo "Analyzing results for iteration $i..."
   
   # Paths for analysis files
@@ -157,8 +148,6 @@ do
     echo "" >> "${MARKDOWN_FILE}"
     echo "---" >> "${MARKDOWN_FILE}"
     echo "**Total evaluation time:** ${time_value}" >> "${MARKDOWN_FILE}"
-    
-    echo "Appended evaluation time to ${MARKDOWN_FILE}"
   else
     echo "Warning: Could not find evaluation time for iteration $i."
   fi

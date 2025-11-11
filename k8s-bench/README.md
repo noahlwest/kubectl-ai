@@ -56,6 +56,7 @@ The `run` subcommand executes the benchmark evaluations.
 | `--quiet` | Quiet mode (non-interactive mode) | true | No |
 | `--concurrency` | Number of tasks to run concurrently (0 = auto based on number of tasks, 1 = sequential, N = run N tasks at a time) | 0 | No |
 | `--mcp-client` | Enable MCP client in kubectl-ai | false | No |
+| `--cluster-creation-policy` | Cluster creation policy: AlwaysCreate, CreateIfNotExist, DoNotCreate | CreateIfNotExist | No |
 
 #### Analyze Subcommand
 
@@ -87,6 +88,7 @@ The `analyze` subcommand processes results from previous runs:
 | `--output-format` | Output format (markdown or json) | markdown | No |
 | `--ignore-tool-use-shim` | Ignore tool use shim in result grouping | true | No |
 | `--results-filepath` | Optional file path to write results to | - | No |
+| `--show-failures` | Show failure details in markdown output | false | No |
 
 Running the benchmark with the `run` subcommand will produce results as below:
 
@@ -104,6 +106,60 @@ Task: scale-down-deployment
 ```
 
 The `analyze` subcommand will gather the results from previous runs and display them in a tabular format with emoji indicators for success (✅) and failure (❌).
+
+### Running evaluations with dev scripts
+
+For a streamlined experience, you can use the provided dev scripts to run the evaluation suite.
+
+#### Run evaluations (preferred method)
+
+The `run-eval-loop.sh` script runs the evaluations a specified number of times, creating a separate output directory for each iteration. This is useful for testing the consistency of a model's performance. This will also automatically create markdown and json analysis files for each run. 
+
+```sh
+# Run the evaluation loop 5 times for tasks matching the "create" pattern
+./dev/ci/periodics/run-eval-loop.sh --iterations 5 --task-pattern "create"
+```
+
+Available flags for `run-eval-loop.sh`:
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `-i, --iterations` | Number of times to run the loop | 1 |
+| `-p, --provider` | The LLM provider to use | gemini |
+| `-m, --model` | The specific model to test | gemini-2.5-pro |
+| `-a, --api-base` | The API base URL | http://localhost:8000/v1 |
+| `-c, --concurrency` | The number of eval tasks to run in parallel | 5 |
+| `-t, --task-pattern` | The regex pattern for tasks to run | |
+| `-k, --cluster-creation-policy` | kind cluster creation policy | CreateIfNotExists |
+
+#### Run evaluations
+
+The `run-evals.sh` script builds the necessary binaries and runs the evaluations a single time. You can pass arguments to the `k8s-bench run` command via the `TEST_ARGS` environment variable.
+
+```sh
+# Run all tasks
+./dev/ci/periodics/run-evals.sh
+
+# Run a specific task
+TEST_ARGS="--task-pattern=fix-probes" ./dev/ci/periodics/run-evals.sh
+
+# Run with a different provider and model
+TEST_ARGS="--llm-provider=openai --models=openai/gpt-oss-20b" ./dev/ci/periodics/run-evals.sh
+```
+
+#### Analyze results
+
+The `analyze-evals.sh` script analyzes the results from the previous run.
+
+```sh
+# Analyze the last run
+./dev/ci/periodics/analyze-evals.sh
+
+# Show failures in the analysis
+./dev/ci/periodics/analyze-evals.sh --show-failures
+```
+
+The results will be saved to `.build/k8s-bench.md` and `.build/k8s-bench.json`.
 
 ### Contributions
 
