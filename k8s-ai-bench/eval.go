@@ -28,7 +28,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/GoogleCloudPlatform/kubectl-ai/k8s-bench/pkg/model"
+	"github.com/GoogleCloudPlatform/kubectl-ai/k8s-ai-bench/pkg/model"
 	"k8s.io/klog/v2"
 	"sigs.k8s.io/yaml"
 )
@@ -36,7 +36,7 @@ import (
 func runEvaluation(ctx context.Context, config EvalConfig) error {
 	logger := klog.FromContext(ctx)
 	if config.ClusterCreationPolicy != DoNotCreate {
-		clusterName := "k8s-bench-eval"
+		clusterName := "k8s-ai-bench-eval"
 		clusterExists, err := kindClusterExists(clusterName)
 		if err != nil {
 			return fmt.Errorf("failed to check if kind cluster exists: %w", err)
@@ -474,7 +474,7 @@ func (x *TaskExecution) runSetup(ctx context.Context) error {
 		kubeconfigPath := filepath.Join(x.taskDir, "kubeconfig.yaml")
 		x.kubeConfig = kubeconfigPath
 
-		clusterName := fmt.Sprintf("k8s-bench-%s", x.taskID)
+		clusterName := fmt.Sprintf("k8s-ai-bench-%s", x.taskID)
 		log.Info("creating kind cluster", "name", clusterName)
 
 		args := []string{

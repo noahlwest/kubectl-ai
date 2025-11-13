@@ -26,7 +26,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/GoogleCloudPlatform/kubectl-ai/k8s-bench/pkg/model"
+	"github.com/GoogleCloudPlatform/kubectl-ai/k8s-ai-bench/pkg/model"
 	"sigs.k8s.io/yaml"
 )
 
@@ -241,7 +241,7 @@ func runEvals(ctx context.Context) error {
 	// Set custom usage for 'run' subcommand
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: %s run [options]\n\n", os.Args[0])
-		fmt.Fprintf(os.Stderr, "Run K8s-bench evaluation benchmarks.\n\n")
+		fmt.Fprintf(os.Stderr, "Run k8s-ai-bench evaluation benchmarks.\n\n")
 		fmt.Fprintf(os.Stderr, "Options:\n")
 		flag.PrintDefaults()
 	}
@@ -340,7 +340,7 @@ func runAnalyze() error {
 	// Set custom usage for 'analyze' subcommand
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: %s analyze --input-dir <directory> [options]\n\n", os.Args[0])
-		fmt.Fprintf(os.Stderr, "Analyze results from previous K8s-bench runs.\n\n")
+		fmt.Fprintf(os.Stderr, "Analyze results from previous k8s-ai-bench runs.\n\n")
 		fmt.Fprintf(os.Stderr, "Options:\n")
 		flag.PrintDefaults()
 	}
@@ -453,7 +453,7 @@ func printMarkdownResults(config AnalyzeConfig, results []model.TaskResult, resu
 	// Create a buffer to hold the output
 	var buffer strings.Builder
 
-	buffer.WriteString("# K8s-bench Evaluation Results\n\n")
+	buffer.WriteString("# k8s-ai-bench Evaluation Results\n\n")
 
 	allModels := make(map[string]bool) // Track all unique models
 	for _, result := range results {
