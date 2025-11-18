@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>k8s-ai-bench Results</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f3f4f6;
+            color: #1f2937;
+            margin: 0;
+            padding: 2rem;
+        }
+        #app {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        header {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        .filters {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .filters label {
+            font-weight: 500;
+        }
+        .filters input {
+            width: 80px;
+            padding: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 1rem 1.5rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        th {
+            background-color: #f9fafb;
+            font-weight: 600;
+            color: #4b5563;
+        }
+        .model-name {
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .bar-container {
+            width: 100%;
+            height: 24px;
+            background-color: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+        .bar {
+            height: 100%;
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+        .pass-5 {
+            background-color: #60a5fa;
+        }
+        .pass-1 {
+            background-color: #2563eb;
+        }
+        .bar-label {
+            position: absolute;
+            left: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: white;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        .details-row {
+            display: none;
+        }
+        .details-cell {
+            padding: 0;
+        }
+        .details-content {
+            padding: 1rem;
+            background-color: #f9fafb;
+        }
+        .task-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .task-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .task-item:last-child {
+            border-bottom: none;
+        }
+        .status-success {
+            color: #16a34a;
+        }
+        .status-fail {
+            color: #dc2626;
+        }
+        .status-fail a {
+            color: #dc2626;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <header>
+            <h1>k8s-ai-bench Results</h1>
+            <div class="filters">
+                <label for="filter-success">Min Success %:</label>
+                <input type="number" id="filter-success" min="0" max="100" value="0">
+            </div>
+        </header>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Model</th>
+                        <th>Pass Rate</th>
+                        <th>Success %</th>
+                    </tr>
+                </thead>
+                <tbody id="results-table">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const resultsTable = document.getElementById('results-table');
+            const filterInput = document.getElementById('filter-success');
+
+            async function fetchData() {
+                try {
+                    const response = await fetch('../k8s-ai-bench.json');
+                    const data = await response.json();
+                    processAndRender(data);
+                } catch (error) {
+                    console.error('Error fetching data:', error);
+                    resultsTable.innerHTML = '<tr><td colspan="3">Error loading data.</td></tr>';
+                }
+            }
+
+            function processAndRender(data) {
+                const resultsByModel = data.reduce((acc, run) => {
+                    const model = run.llmConfig.model;
+                    if (!acc[model]) {
+                        acc[model] = {};
+                    }
+                    if (!acc[model][run.name]) {
+                        acc[model][run.name] = [];
+                    }
+                    acc[model][run.name].push(run);
+                    return acc;
+                }, {});
+
+                const aggregatedResults = Object.entries(resultsByModel).map(([model, tasks]) => {
+                    let totalTasks = 0;
+                    let passAt1 = 0;
+                    let passAt5 = 0;
+                    let totalSuccesses = 0;
+                    let totalRuns = 0;
+
+                    const taskDetails = Object.entries(tasks).map(([taskName, runs]) => {
+                        totalTasks++;
+                        const successfulRun = runs.find(run => run.result === 'success');
+                        const firstRunSuccess = runs.length > 0 && runs[0].result === 'success';
+
+                        if (firstRunSuccess) {
+                            passAt1++;
+                        }
+                        if (successfulRun) {
+                            passAt5++;
+                        }
+
+                        runs.forEach(run => {
+                           if(run.result === 'success') totalSuccesses++;
+                           totalRuns++;
+                        });
+
+                        return {
+                            name: taskName,
+                            runs: runs.map(r => ({
+                                result: r.result,
+                                log: r.failures && r.failures.length > 0 ? r.failures[0].message.split('full log at ')[1] : null
+                            }))
+                        };
+                    });
+
+                    const successRate = totalRuns > 0 ? (totalSuccesses / totalRuns) * 100 : 0;
+                    const passAt1Rate = totalTasks > 0 ? (passAt1 / totalTasks) * 100 : 0;
+                    const passAt5Rate = totalTasks > 0 ? (passAt5 / totalTasks) * 100 : 0;
+
+                    return { model, successRate, passAt1Rate, passAt5Rate, taskDetails };
+                });
+
+                renderTable(aggregatedResults);
+
+                filterInput.addEventListener('input', () => {
+                    const minValue = parseFloat(filterInput.value) || 0;
+                    const rows = document.querySelectorAll('#results-table tr.model-row');
+                    rows.forEach(row => {
+                        const successRate = parseFloat(row.dataset.successRate);
+                        if (successRate >= minValue) {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    });
+                });
+            }
+
+            function renderTable(results) {
+                results.sort((a, b) => b.successRate - a.successRate);
+                resultsTable.innerHTML = '';
+
+                results.forEach(result => {
+                    const row = document.createElement('tr');
+                    row.className = 'model-row';
+                    row.dataset.successRate = result.successRate.toFixed(2);
+                    row.innerHTML = `
+                        <td class="model-name">${result.model}</td>
+                        <td>
+                            <div class="bar-container">
+                                <div class="bar pass-5" style="width: ${result.passAt5Rate.toFixed(2)}%;">
+                                    <span class="bar-label">Pass@5: ${result.passAt5Rate.toFixed(2)}%</span>
+                                </div>
+                                <div class="bar pass-1" style="width: ${result.passAt1Rate.toFixed(2)}%;">
+                                    <span class="bar-label">Pass@1: ${result.passAt1Rate.toFixed(2)}%</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>${result.successRate.toFixed(2)}%</td>
+                    `;
+                    resultsTable.appendChild(row);
+
+                    const detailsRow = document.createElement('tr');
+                    detailsRow.className = 'details-row';
+                    const detailsCell = document.createElement('td');
+                    detailsCell.colSpan = 3;
+                    detailsCell.className = 'details-cell';
+
+                    const detailsContent = document.createElement('div');
+                    detailsContent.className = 'details-content';
+
+                    const taskList = document.createElement('ul');
+                    taskList.className = 'task-list';
+
+                    result.taskDetails.forEach(task => {
+                        const taskItem = document.createElement('li');
+                        taskItem.className = 'task-item';
+
+                        let statusHtml = '';
+                        task.runs.forEach((run, i) => {
+                           if(run.result === 'success'){
+                               statusHtml += `<span class="status-success">Run ${i+1}: Success</span>`;
+                           } else {
+                               if(run.log) {
+                                   statusHtml += `<span class="status-fail"><a href="file://${run.log}" target="_blank">Run ${i+1}: Fail</a></span>`;
+                               } else {
+                                   statusHtml += `<span class="status-fail">Run ${i+1}: Fail</span>`;
+                               }
+                           }
+                           if(i < task.runs.length -1) statusHtml += ', ';
+                        });
+
+                        taskItem.innerHTML = `
+                            <span>${task.name}</span>
+                            <div>${statusHtml}</div>
+                        `;
+                        taskList.appendChild(taskItem);
+                    });
+
+                    detailsContent.appendChild(taskList);
+                    detailsCell.appendChild(detailsContent);
+                    detailsRow.appendChild(detailsCell);
+                    resultsTable.appendChild(detailsRow);
+
+                    row.querySelector('.model-name').addEventListener('click', () => {
+                        detailsRow.style.display = detailsRow.style.display === 'none' ? '' : 'none';
+                    });
+                });
+            }
+
+            fetchData();
+        });
+    </script>
+</body>
+</html>
