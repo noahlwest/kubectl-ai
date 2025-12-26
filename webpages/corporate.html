@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>k8s-ai-bench Enterprise Dashboard</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background-color: #f2f2f2;
+        }
+        .sidebar {
+            width: 250px;
+            background-color: #2c3e50;
+            color: white;
+            position: fixed;
+            height: 100%;
+        }
+        .sidebar h2 {
+            text-align: center;
+            padding: 20px 0;
+            margin: 0;
+            background-color: #1abc9c;
+        }
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+        }
+        .sidebar li a {
+            display: block;
+            padding: 15px 20px;
+            color: white;
+            text-decoration: none;
+        }
+        .sidebar li a:hover {
+            background-color: #34495e;
+        }
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+        }
+        .card {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #ecf0f1;
+        }
+        .success { color: #27ae60; }
+        .fail { color: #c0392b; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h2>k8s-ai-bench</h2>
+        <ul>
+            <li><a href="#">Dashboard</a></li>
+            <li><a href="#">Analytics</a></li>
+            <li><a href="#">Reports</a></li>
+            <li><a href="#">Settings</a></li>
+        </ul>
+    </div>
+    <div class="main-content">
+        <h1>Enterprise Dashboard</h1>
+        <div class="card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Task Name</th>
+                        <th>Model</th>
+                        <th>Result</th>
+                    </tr>
+                </thead>
+                <tbody id="results-table">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+       const jsonData = [
+  {
+    "name": "create-canary-deployment",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "create-canary-deployment",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
+      "provider": "gemini",
+      "model": "gemini-2.5-pro",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "create-network-policy",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "fail",
+    "failures": [
+      {
+        "message": "verifier script failed"
+      }
+    ],
+    "error": ""
+  },
+  {
+    "name": "create-network-policy",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
+      "provider": "gemini",
+      "model": "gemini-2.5-pro",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "fail",
+    "failures": [
+      {
+        "message": "verifier script failed"
+      }
+    ],
+    "error": ""
+  },
+  {
+    "name": "create-pod",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "failures": [
+      {
+        "message": "verifier script failed"
+      }
+    ],
+    "error": ""
+  },
+  {
+    "name": "create-pod",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
+      "provider": "gemini",
+      "model": "gemini-2.5-pro",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "create-pod-mount-configmaps",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "create-pod-mount-configmaps",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
+      "provider": "gemini",
+      "model": "gemini-2.5-pro",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "create-pod-resources-limits",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "create-pod-resources-limits",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
+      "provider": "gemini",
+      "model": "gemini-2.5-pro",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "create-simple-rbac",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "create-simple-rbac",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
+      "provider": "gemini",
+      "model": "gemini-2.5-pro",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "debug-app-logs",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "debug-app-logs",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
+      "provider": "gemini",
+      "model": "gemini-2.5-pro",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "deployment-traffic-switch",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "deployment-traffic-switch",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
+      "provider": "gemini",
+      "model": "gemini-2.5-pro",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "fix-crashloop",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "fail",
+    "failures": [
+      {
+        "message": "verifier script failed"
+      }
+    ],
+    "error": ""
+  },
+  {
+    "name": "fix-crashloop",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
+      "provider": "gemini",
+      "model": "gemini-2.5-pro",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "fix-image-pull",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "fail",
+    "failures": [
+      {
+        "message": "verifier script failed"
+      }
+    ],
+    "error": ""
+  },
+  {
+    "name": "fix-image-pull",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
+      "provider": "gemini",
+      "model": "gemini-2.5-pro",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "fix-oomkilled",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "fix-oomkilled",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
+      "provider": "gemini",
+      "model": "gemini-2.5-pro",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "fix-pending-pod",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "fix-pending-pod",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
+      "provider": "gemini",
+      "model": "gemini-2.5-pro",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "fix-probes",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "fail",
+    "failures": [
+      {
+        "message": "verifier script failed"
+      }
+    ],
+    "error": ""
+  },
+  {
+    "name": "fix-probes",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
+      "provider": "gemini",
+      "model": "gemini-2.5-pro",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "fix-rbac-wrong-resource",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "fix-rbac-wrong-resource",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
+      "provider": "gemini",
+      "model": "gemini-2.5-pro",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "fix-service-routing",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "fix-service-routing",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
+      "provider": "gemini",
+      "model": "gemini-2.5-pro",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "fix-service-with-no-endpoints",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "fix-service-with-no-endpoints",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
+      "provider": "gemini",
+      "model": "gemini-2.5-pro",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "horizontal-pod-autoscaler",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "fail",
+    "failures": [
+      {
+        "message": "verifier script failed"
+      }
+    ],
+    "error": ""
+  },
+  {
+    "name": "horizontal-pod-autoscaler",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
+      "provider": "gemini",
+      "model": "gemini-2.5-pro",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "fail",
+    "failures": [
+      {
+        "message": "verifier script failed"
+      }
+    ],
+    "error": ""
+  },
+  {
+    "name": "list-images-for-pods",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "list-images-for-pods",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
+      "provider": "gemini",
+      "model": "gemini-2.5-pro",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "multi-container-pod-communication",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "multi-container-pod-communication",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
+      "provider": "gemini",
+      "model": "gemini-2.5-pro",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "resize-pvc",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "fail",
+    "failures": [
+      {
+        "message": "verifier script failed"
+      }
+    ],
+    "error": ""
+  },
+  {
+    "name": "resize-pvc",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
+      "provider": "gemini",
+      "model": "gemini-2.5-pro",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "rolling-update-deployment",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "fail",
+    "failures": [
+      {
+        "message": "verifier script failed"
+      }
+    ],
+    "error": ""
+  },
+  {
+    "name": "rolling-update-deployment",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
+      "provider": "gemini",
+      "model": "gemini-2.5-pro",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "scale-deployment",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "scale-deployment",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
+      "provider": "gemini",
+      "model": "gemini-2.5-pro",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "scale-down-deployment",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "scale-down-deployment",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
+      "provider": "gemini",
+      "model": "gemini-2.5-pro",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "setup-dev-cluster",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "setup-dev-cluster",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
+      "provider": "gemini",
+      "model": "gemini-2.5-pro",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  },
+  {
+    "name": "statefulset-lifecycle",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-flash",
+      "provider": "gemini",
+      "model": "gemini-2.5-flash",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "fail",
+    "failures": [
+      {
+        "message": "verifier script failed"
+      }
+    ],
+    "error": ""
+  },
+  {
+    "name": "statefulset-lifecycle",
+    "llmConfig": {
+      "id": "shim_disabled-gemini-gemini-2.5-pro",
+      "provider": "gemini",
+      "model": "gemini-2.5-pro",
+      "enableToolUseShim": false,
+      "quiet": true
+    },
+    "result": "success",
+    "error": ""
+  }
+];
+        const tableBody = document.getElementById('results-table');
+        jsonData.forEach(item => {
+            const row = document.createElement('tr');
+            const resultClass = item.result === 'success' ? 'success' : 'fail';
+            row.innerHTML = `
+                <td>${item.name}</td>
+                <td>${item.llmConfig.model}</td>
+                <td class="${resultClass}">${item.result}</td>
+            `;
+            tableBody.appendChild(row);
+        });
+    </script>
+</body>
+</html>
